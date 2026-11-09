@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 8 — Real-World Project | Big Data Transformation Book</title>
+  <style>
+    :root { --bg: #0b1120; --panel: #111827; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent-2: #f59e0b; --border: #1e293b; --code-bg: #070c16; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    .chapter-num { color: var(--muted); font-size: 0.95rem; }
+    h2 { color: var(--accent); margin-top: 2.5rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: "Fira Code", "Consolas", monospace; }
+    p code, li code { background: var(--panel); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin: 0.4rem 0; }
+    .note { background: var(--panel); border-left: 4px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+    .nav { display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="chapter-num">Chapter 8</p>
+      <h1>Real-World Project</h1>
+    </header>
+
+    <p>
+      In this project you will build a small sales analytics pipeline. You will:
+    </p>
+    <ol>
+      <li>Create source tables from CSV and a PostgreSQL database.</li>
+      <li>Clean and transform the data with PySpark.</li>
+      <li>Store the final model as a Delta table.</li>
+      <li>Run analytics queries and time-travel to previous versions.</li>
+    </ol>
+
+    <h2>Step 1 — Create source data</h2>
+    <p>Import the sample <code>data/accounts.json</code> file as a Spark table named <code>default.customers</code>.</p>
+    <p>Then create a sample orders CSV at <code>C:\data\orders.csv</code>:</p>
+    <pre><code>order_id,customer_id,amount,status,created_at
+1,1,99.99,paid,2026-01-15
+2,1,149.50,paid,2026-01-16
+3,6,29.99,refunded,2026-01-17
+4,13,199.00,paid,2026-01-18
+5,1,75.00,paid,2026-01-20</code></pre>
+    <p>Import it as a Delta table named <code>default.orders_raw</code>.</p>
+
+    <h2>Step 2 — Clean with PySpark</h2>
+    <pre><code>from pyspark.sql import functions as F
+
+orders = spark.table("demo.orders_raw")
+customers = spark.table("spark_catalog.default.customers")
+
+clean_orders = (
+    orders
+    .filter(F.col("status") != "refunded")
+    .withColumn("amount", F.col("amount").cast("double"))
+    .withColumn("created_at", F.to_date("created_at", "yyyy-MM-dd"))
+    .dropDuplicates(["order_id"])
+)
+
+customer_metrics = (
+    clean_orders
+    .groupBy("customer_id")
+    .agg(
+        F.count("*").alias("total_orders"),
+        F.sum("amount").alias("lifetime_value"),
+        F.max("created_at").alias("last_order_date")
+    )
+)
+
+final = (
+    customers
+    .select("account_number", "firstname", "lastname", "state")
+    .join(
+        customer_metrics,
+        customers.account_number == customer_metrics.customer_id,
+        "left"
+    )
+    .fillna(0, ["total_orders", "lifetime_value"])
+)
+
+final.write.format("delta").mode("overwrite").saveAsTable("demo.customer_360")
+
+# Return a preview
+spark.table("demo.customer_360").limit(20)</code></pre>
+
+    <h2>Step 3 — Analytics with SQL</h2>
+    <pre><code>-- Top customers by lifetime value
+SELECT firstname, lastname, state, lifetime_value
+FROM demo.customer_360
+ORDER BY lifetime_value DESC
+LIMIT 10;
+
+-- Revenue by state
+SELECT state, SUM(lifetime_value) AS total_revenue
+FROM demo.customer_360
+GROUP BY state
+ORDER BY total_revenue DESC;
+
+-- Table history
+DESCRIBE HISTORY demo.customer_360;</code></pre>
+
+    <h2>Step 4 — Time travel</h2>
+    <pre><code>-- Restore the first version (replace with an actual version number)
+SELECT * FROM demo.customer_360 VERSION AS OF 0 LIMIT 5;</code></pre>
+
+    <div class="note">
+      <strong>Congratulations!</strong> You have built a complete lakehouse pipeline: ingestion, transformation, modeling, and analytics — all on your local machine.
+    </div>
+
+    <div class="nav">
+      <a href="07-pyspark-transformations.html">← PySpark Transformations</a>
+      <a href="../index.html">Back to Table of Contents →</a>
+    </div>
+
+    <footer>
+      <p>Open Lakehouse Workbench · Chapter 8 · Real-World Project</p>
+    </footer>
+  </div>
+</body>
+</html>

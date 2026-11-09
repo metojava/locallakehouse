@@ -1,0 +1,18 @@
+# --- API layer -------------------------------------------------------------
+fastapi>=0.116,<1.0
+uvicorn[standard]>=0.35,<1.0
+pydantic>=2.11,<3.0
+pydantic-settings>=2.10,<3.0
+
+# --- Local execution engine -------------------------------------------------
+# Spark 4.1.4 is the newest release that both Delta Lake 4.3.1 and
+# Apache Iceberg 1.12.0 publish connectors for. Requires Java 17+.
+pyspark==4.1.4
+
+# Delta Lake and Iceberg Spark extensions are resolved from Maven Central by
+# Spark at session startup (see app/config.py + README offline instructions):
+#   io.delta:delta-spark_2.13:4.3.1
+#   org.apache.iceberg:iceberg-spark-runtime-4.1_2.13:1.12.0
+
+# --- Jupyter kernels (Java/Scala notebooks) -----------------------------------
+jupyter_client>=8.6,<9.0

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 1 — Introduction | Big Data Transformation Book</title>
+  <style>
+    :root {
+      --bg: #0b1120; --panel: #111827; --text: #e2e8f0; --muted: #94a3b8;
+      --accent: #38bdf8; --accent-2: #f59e0b; --border: #1e293b; --code-bg: #070c16;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    .chapter-num { color: var(--muted); font-size: 0.95rem; }
+    h2 { color: var(--accent); margin-top: 2.5rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: "Fira Code", "Consolas", monospace; }
+    p code, li code { background: var(--panel); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin: 0.4rem 0; }
+    .note { background: var(--panel); border-left: 4px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+    .nav { display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .nav a { font-weight: 600; }
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="chapter-num">Chapter 1</p>
+      <h1>Introduction</h1>
+    </header>
+
+    <p>
+      Modern data platforms are built on three ideas: a fast execution engine, a way to store
+      tables reliably, and an open format that prevents vendor lock-in. This book teaches all
+      three using the <strong>Open Lakehouse Workbench</strong>.
+    </p>
+
+    <h2>What is the Open Lakehouse Workbench?</h2>
+    <p>
+      It is a fully local application that bundles:
+    </p>
+    <ul>
+      <li><strong>Apache Spark 4.1</strong> — the engine for SQL and Python data processing.</li>
+      <li><strong>Delta Lake 4.3</strong> — ACID transactions and time travel for the default catalog.</li>
+      <li><strong>Apache Iceberg 1.12</strong> — an open table format with snapshot isolation and hidden partitioning.</li>
+      <li><strong>FastAPI + React</strong> — a web UI with a SQL editor, PySpark editor, schema explorer, and database browser.</li>
+    </ul>
+
+    <h2>Why these three technologies?</h2>
+    <table style="width:100%; border-collapse: collapse; margin: 1rem 0;">
+      <tr style="border-bottom: 1px solid var(--border);">
+        <th style="text-align:left; padding:0.6rem;">Technology</th>
+        <th style="text-align:left; padding:0.6rem;">Role</th>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding:0.6rem;">Apache Spark</td>
+        <td style="padding:0.6rem;">Distributed data processing engine. Runs SQL and Python transformations.</td>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding:0.6rem;">Delta Lake</td>
+        <td style="padding:0.6rem;">ACID table format with scalable metadata handling.</td>
+      </tr>
+      <tr>
+        <td style="padding:0.6rem;">Apache Iceberg</td>
+        <td style="padding:0.6rem;">Open table format designed for cloud-scale analytics and engine interoperability.</td>
+      </tr>
+    </table>
+
+    <h2>Key concepts you will learn</h2>
+    <ol>
+      <li>How to write Spark SQL that works across Delta and Iceberg catalogs.</li>
+      <li>How to import CSV, JSON, Parquet, ORC, Avro, and database tables.</li>
+      <li>How to use PySpark for complex transformations.</li>
+      <li>How Delta Lake handles updates, deletes, and time travel.</li>
+      <li>How Iceberg manages snapshots, partitioning, and hidden evolution.</li>
+      <li>How to build an end-to-end analytics pipeline.</li>
+    </ol>
+
+    <div class="note">
+      <strong>Tip:</strong> Keep the workbench open while reading. Every code example in this book can be copied directly into the SQL editor or PySpark editor and executed locally.
+    </div>
+
+    <div class="nav">
+      <a href="../index.html">← Table of Contents</a>
+      <a href="02-setup.html">Next: Setup & First Query →</a>
+    </div>
+
+    <footer>
+      <p>Open Lakehouse Workbench · Chapter 1 · Introduction</p>
+    </footer>
+  </div>
+</body>
+</html>

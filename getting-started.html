@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started — Open Lakehouse Workbench</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #111827;
+      --panel-2: #0f172a;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #f59e0b;
+      --green: #34d399;
+      --red: #f87171;
+      --border: #1e293b;
+      --code-bg: #070c16;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(1200px 600px at 80% -10%, #0f2438 0%, var(--bg) 55%);
+      color: var(--text);
+      line-height: 1.7;
+    }
+    .container { max-width: 980px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+    .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.72rem; font-weight: 700; }
+    h1 { font-size: 2.3rem; line-height: 1.15; margin: 0.4rem 0 0.6rem; }
+    .subtitle { color: var(--muted); font-size: 1.08rem; margin: 0; max-width: 70ch; }
+    h2 { color: var(--accent); margin-top: 2.8rem; font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; font-size: 1.12rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    p, li { color: var(--text); }
+    ul, ol { padding-left: 1.35rem; }
+    li { margin: 0.35rem 0; }
+    code { font-family: "Cascadia Code", "Consolas", "Fira Code", monospace; }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      overflow-x: auto;
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+    pre code { color: #d6e2f0; }
+    p code, li code, td code, th code {
+      background: var(--panel);
+      padding: 0.13rem 0.36rem;
+      border-radius: 5px;
+      font-size: 0.86em;
+      border: 1px solid var(--border);
+    }
+    .lead-note, .note, .warn, .ok {
+      border-radius: 0 10px 10px 0;
+      padding: 0.95rem 1.2rem;
+      margin: 1.4rem 0;
+      background: var(--panel);
+    }
+    .note { border-left: 4px solid var(--accent); }
+    .warn { border-left: 4px solid var(--accent-2); }
+    .ok { border-left: 4px solid var(--green); }
+    .cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.4rem; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--accent); color: #04131f; padding: 0.62rem 1.1rem;
+      border-radius: 9px; font-weight: 700; font-size: 0.92rem;
+    }
+    .btn.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+    .btn:hover { text-decoration: none; filter: brightness(1.06); }
+    .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+    .card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+    }
+    .card h4 { margin: 0 0 0.4rem; font-size: 1rem; }
+    .card p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+    .toc {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.3rem;
+      margin: 1.8rem 0;
+      columns: 2;
+      column-gap: 2rem;
+    }
+    .toc a { display: block; padding: 0.18rem 0; font-size: 0.92rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.9rem; }
+    th, td { text-align: left; border: 1px solid var(--border); padding: 0.6rem 0.75rem; vertical-align: top; }
+    th { background: var(--panel); color: var(--accent); }
+    tr:nth-child(even) td { background: rgba(255, 255, 255, 0.015); }
+    .pill { display: inline-block; border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.72rem; font-weight: 700; }
+    .pill.blue { background: rgba(56,189,248,0.14); color: var(--accent); }
+    .pill.green { background: rgba(52,211,153,0.14); color: var(--green); }
+    .pill.amber { background: rgba(245,158,11,0.14); color: var(--accent-2); }
+    .muted { color: var(--muted); }
+    footer { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.86rem; }
+    @media (max-width: 640px) { .toc { columns: 1; } h1 { font-size: 1.8rem; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="eyebrow">Open Lakehouse Workbench</p>
+      <h1>Getting Started</h1>
+      <p class="subtitle">
+        A fully local lakehouse for SQL and PySpark over Delta Lake and Apache Iceberg.
+        No cloud account, no external catalog, no cluster — just your machine.
+      </p>
+      <div class="cta">
+        <a class="btn" href="#quickstart">Start in 5 minutes</a>
+        <a class="btn secondary" href="README.md">Full README</a>
+        <a class="btn secondary" href="docs/book/index.html">Online book</a>
+      </div>
+    </header>
+
+    <div class="note lead-note">
+      <strong>New here?</strong> The backend is a FastAPI server that owns a single Spark session.
+      The frontend is a React UI. You start both, open the browser, and use the SQL editor,
+      PySpark editor, catalog, and storage views. Everything is stored under
+      <code>data_warehouse/</code> on your disk.
+    </div>
+
+    <nav class="toc">
+      <a href="#how-it-works">How it works</a>
+      <a href="#prerequisites">Prerequisites</a>
+      <a href="#quickstart">Quick start</a>
+      <a href="#first-run">First run &amp; expect timing</a>
+      <a href="#ui">The workbench UI</a>
+      <a href="#spark-settings">Spark settings</a>
+      <a href="#examples">Try it: SQL &amp; PySpark</a>
+      <a href="#demo-data">Seed demo data</a>
+      <a href="#databases">Connect a database</a>
+      <a href="#configuration">Configuration</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+      <a href="#layout">Project layout</a>
+    </nav>
+
+    <h2 id="how-it-works">How it works</h2>
+    <p>
+      The backend runs one lazily-started local Spark session. All SQL and PySpark scripts share it,
+      so temporary views and catalog state are visible everywhere. Two catalogs are registered:
+    </p>
+    <table>
+      <thead>
+        <tr><th>Catalog</th><th>Engine</th><th>Warehouse on disk</th><th>Query form</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>spark_catalog</code> (shown as <strong>delta</strong>)</td>
+          <td>Delta Lake + Derby Hive metastore</td>
+          <td><code>data_warehouse/delta</code></td>
+          <td><code>db.table</code> or <code>spark_catalog.db.table</code></td>
+        </tr>
+        <tr>
+          <td><code>local_iceberg</code></td>
+          <td>Iceberg Hadoop catalog</td>
+          <td><code>data_warehouse/iceberg</code></td>
+          <td><code>local_iceberg.db.table</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <pre><code>┌──────────────────────────────────────────────┐
+│ React + TypeScript UI  (http://127.0.0.1:5173)│
+│ SQL · PySpark · Databases · Schema · Storage  │
+└───────────────────┬──────────────────────────┘
+                    │ REST (FastAPI, 127.0.0.1:8000)
+┌───────────────────▼──────────────────────────┐
+│ FastAPI  /api/execute-sql  /api/execute-pyspark│
+│          /api/tables  /api/import-file  ...    │
+└───────────────────┬──────────────────────────┘
+                    │
+        Single local SparkSession (lazy)
+        ├─ spark_catalog → Delta    ./data_warehouse/delta
+        └─ local_iceberg → Iceberg  ./data_warehouse/iceberg</code></pre>
+
+    <h2 id="prerequisites">Prerequisites</h2>
+    <ul>
+      <li><strong>Python 3.10 or newer</strong> (PySpark 4.1.4 runs on 3.10+).</li>
+      <li><strong>Java 17 or newer</strong> — <code>JAVA_HOME</code> set and <code>java -version</code> works.</li>
+      <li><strong>Node.js 20+</strong> and npm (for the UI).</li>
+      <li><strong>Internet on first launch</strong> to fetch the Delta/Iceberg connector jars from Maven Central.</li>
+      <li>
+        <strong>Windows only:</strong> Hadoop <code>winutils.exe</code> and <code>hadoop.dll</code>.
+        Set <code>HADOOP_HOME</code> to a folder whose <code>bin\</code> contains them.
+      </li>
+    </ul>
+    <div class="warn">
+      <strong>You do NOT need a global <code>SPARK_HOME</code> or a <code>spark</code> entry on <code>PATH</code>.</strong>
+      The backend uses the Spark distribution bundled with the PySpark wheel in <code>backend/.venv</code>.
+      Leaving an old Spark (for example 3.5.6) on <code>PATH</code> only causes confusion.
+    </div>
+
+    <h2 id="quickstart">Quick start</h2>
+    <p>From the repository root, open two terminals.</p>
+
+    <h3>Terminal 1 — backend (FastAPI + Spark)</h3>
+    <pre><code>powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1</code></pre>
+    <p class="muted">
+      First run creates <code>backend/.venv</code>, installs dependencies, then starts Uvicorn on
+      <a href="http://127.0.0.1:8000" target="_blank">http://127.0.0.1:8000</a>.
+    </p>
+
+    <h3>Terminal 2 — frontend (React UI)</h3>
+    <pre><code>powershell -ExecutionPolicy Bypass -File .\scripts\start-frontend.ps1</code></pre>
+    <p class="muted">
+      Installs npm packages on first run and starts Vite on
+      <a href="http://127.0.0.1:5173" target="_blank">http://127.0.0.1:5173</a>.
+    </p>
+
+    <h3>Or start both at once</h3>
+    <pre><code>powershell -ExecutionPolicy Bypass -File .\scripts\start-all.ps1</code></pre>
+
+    <h3>Shortcuts on Windows (double-click / cmd)</h3>
+    <pre><code>scripts\start-backend.bat
+scripts\start-frontend.bat
+scripts\start-all.bat</code></pre>
+
+    <h3>Open the workbench</h3>
+    <ul>
+      <li>Workbench UI: <a href="http://127.0.0.1:5173" target="_blank">http://127.0.0.1:5173</a></li>
+      <li>OpenAPI docs: <a href="http://127.0.0.1:8000/docs" target="_blank">http://127.0.0.1:8000/docs</a></li>
+      <li>Alternative UI copy: <a href="http://127.0.0.1:5174" target="_blank">http://127.0.0.1:5174</a> (<code>frontend-ts</code>)</li>
+    </ul>
+
+    <div class="note">
+      <strong>Manual launch (macOS / Linux or if scripts fail)</strong>
+      <pre><code># Backend
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # Windows: .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev</code></pre>
+      <span class="muted">On macOS/Linux you can also use <code>./scripts/start-backend.sh</code> and <code>./scripts/start-frontend.sh</code>.</span>
+    </div>
+
+    <h2 id="first-run">First run &amp; expect timing</h2>
+    <ul>
+      <li>The first SQL or PySpark request starts the Spark JVM and resolves connector jars. This can take
+        <strong>30–90 seconds</strong>.</li>
+      <li>After that the jars are cached in <code>%USERPROFILE%\.ivy2*</code> (Windows) or <code>~/.ivy2*</code>, and
+        subsequent sessions start in a few seconds.</li>
+      <li>The backend health indicator goes from <span class="pill amber">Spark cold</span> to
+        <span class="pill green">Spark warm</span> after the first request.</li>
+      <li>Check backend status any time:
+        <a href="http://127.0.0.1:8000/api/health" target="_blank">http://127.0.0.1:8000/api/health</a>.</li>
+    </ul>
+    <div class="ok">
+      <strong>Fast path:</strong> if you only want to run PySpark locally, a warm session executes
+      <code>spark.range(100)</code> in a few seconds. The long wait happens only on the very first start.
+    </div>
+
+    <h2 id="ui">The workbench UI</h2>
+    <div class="grid">
+      <div class="card"><h4>SQL Editor</h4><p>Run one or many statements against Delta and Iceberg. Results are capped and exportable.</p></div>
+      <div class="card"><h4>PySpark Editor</h4><p>Run Python with <code>spark</code> pre-bound. Return a DataFrame for a table preview.</p></div>
+      <div class="card"><h4>Databases</h4><p>Browse saved / <code>databases.cfg</code> connections and import tables into Delta, Iceberg, or Spark.</p></div>
+      <div class="card"><h4>Schema Explorer</h4><p>Discover namespaces and tables across both catalogs.</p></div>
+      <div class="card"><h4>Storage Inspector</h4><p>Inspect the physical files under <code>data_warehouse</code>.</p></div>
+      <div class="card"><h4>Spark Settings</h4><p>See the active Spark, pick a local install, or download a compatible one.</p></div>
+    </div>
+
+    <h2 id="spark-settings">Spark settings (bundled vs local)</h2>
+    <p>
+      Open <strong>Spark Settings</strong> in the sidebar. By default the app uses the Spark bundled with
+      PySpark <strong>4.1.4</strong> inside the virtual environment — nothing to install, no global
+      <code>SPARK_HOME</code> needed. From this page you can:
+    </p>
+    <ul>
+      <li><strong>Browse…</strong> to open a native folder picker on the backend machine, or type a path, then click
+        <strong>Use this Spark</strong>.</li>
+      <li><strong>Download &amp; install</strong> a matching Spark release (about 570 MB) in the background, with progress.</li>
+      <li><strong>Use bundled</strong> to revert.</li>
+    </ul>
+    <div class="warn">
+      <strong>Compatibility rule.</strong> A local Spark must be <strong>4.1.x built for Scala 2.13</strong>.
+      The Delta 4.3.1 and Iceberg 1.12 connectors are compiled for Spark 4.1 / Scala 2.13, and the PySpark client is
+      4.1.4. A <code>spark-3.5.6-bin-hadoop3</code> install is Scala 2.12 and is rejected with an explanation.
+    </div>
+    <p class="muted">
+      A selected Spark home is saved to <code>.runtime_settings.json</code> (overrides <code>LAKEHOUSE_SPARK_HOME</code>)
+      and the Spark session is restarted. Downloads extract to <code>.spark_dist/</code>.
+    </p>
+
+    <h2 id="examples">Try it: SQL &amp; PySpark</h2>
+    <h3>PySpark</h3>
+    <pre><code>from pyspark.sql import functions as F
+
+df = spark.range(100).withColumn("value", F.rand())
+df          # last expression → table preview</code></pre>
+
+    <h3>SQL</h3>
+    <pre><code>SELECT current_timestamp() AS first_query;</code></pre>
+    <pre><code>CREATE TABLE IF NOT EXISTS demo.orders (
+  order_id BIGINT,
+  customer_id BIGINT,
+  total DOUBLE,
+  ordered_at TIMESTAMP
+) USING delta;
+
+INSERT INTO demo.orders VALUES (1001, 1, 249.99, current_timestamp());
+SELECT * FROM demo.orders;</code></pre>
+    <p class="muted">Multi-statement scripts run in order; semicolons inside strings and comments are handled.</p>
+
+    <h2 id="demo-data">Seed demo data (optional)</h2>
+    <p>
+      Creates a Delta table <code>demo.customers</code> and an Iceberg table
+      <code>local_iceberg.demo.sales</code>.
+    </p>
+    <pre><code>cd backend
+.\.venv\Scripts\Activate.ps1      # macOS/Linux: source .venv/bin/activate
+python seed_demo.py</code></pre>
+    <div class="warn">
+      <strong>Stop the backend first.</strong> The embedded Derby metastore allows only one JVM at a time.
+      Then run the seed script, then start the backend again.
+    </div>
+    <pre><code>SELECT * FROM local_iceberg.demo.sales ORDER BY sold_at DESC LIMIT 100;
+
+SELECT country, count(*) AS customers
+FROM demo.customers
+GROUP BY country
+ORDER BY customers DESC;</code></pre>
+
+    <h2 id="databases">Connect a database (optional)</h2>
+    <p>Create <code>databases.cfg</code> in the repository root:</p>
+    <pre><code>[postgresql.local_postgres]
+name=Local PostgreSQL
+host=localhost
+port=5432
+database=mydb
+username=postgres
+password=changeme
+
+[mysql.local_mysql]
+name=Local MySQL
+host=localhost
+port=3306
+database=mydb
+username=root
+password=changeme</code></pre>
+    <p class="muted">
+      Then open <strong>Databases</strong>, list tables, and import them as Delta, Iceberg, or plain Spark tables.
+      You can also manage connections from the Import → Database tab.
+    </p>
+
+    <h2 id="configuration">Configuration</h2>
+    <p>
+      Copy <code>.env.example</code> to <code>.env</code> in the repository root. Backend settings use the
+      <code>LAKEHOUSE_</code> prefix. Common ones:
+    </p>
+    <table>
+      <thead><tr><th>Variable</th><th>Default</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>LAKEHOUSE_WAREHOUSE_DIR</code></td><td><code>&lt;repo&gt;/data_warehouse</code></td><td>Where tables live.</td></tr>
+        <tr><td><code>LAKEHOUSE_SPARK_METASTORE_DIR</code></td><td><code>&lt;repo&gt;/.spark_metastore</code></td><td>Embedded Derby metastore.</td></tr>
+        <tr><td><code>LAKEHOUSE_SPARK_MASTER</code></td><td><code>local[*]</code></td><td>Spark master URL.</td></tr>
+        <tr><td><code>LAKEHOUSE_SPARK_DRIVER_MEMORY</code></td><td><code>2g</code></td><td>Driver heap.</td></tr>
+        <tr><td><code>LAKEHOUSE_SPARK_HOME</code></td><td>unset</td><td>Optional external Spark 4.1.x (Scala 2.13).</td></tr>
+        <tr><td><code>LAKEHOUSE_SPARK_DIST_DIR</code></td><td><code>&lt;repo&gt;/.spark_dist</code></td><td>Where downloads extract.</td></tr>
+        <tr><td><code>LAKEHOUSE_QUERY_TIMEOUT_SECONDS</code></td><td><code>300</code></td><td>Per-statement timeout.</td></tr>
+        <tr><td><code>LAKEHOUSE_MAX_RESULT_ROWS</code></td><td><code>1000</code></td><td>Result row cap.</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">
+      Restart the backend after changing Spark configuration — one session is created per process.
+      Frontend API base URL: <code>VITE_API_BASE_URL</code> (default <code>http://127.0.0.1:8000</code>).
+    </p>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+    <table>
+      <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>UI shows “Backend offline”</td><td>Start the backend and confirm <a href="http://127.0.0.1:8000/api/health" target="_blank">/api/health</a>. Check CORS/origin if the UI runs on another port.</td></tr>
+        <tr><td>First query hangs 30–90s</td><td>Normal: Spark JVM startup + one-time jar resolution. Later runs are fast.</td></tr>
+        <tr><td>“Could not start Apache Spark”</td><td>Verify Java 17+, <code>JAVA_HOME</code>, and internet/proxy access to Maven Central.</td></tr>
+        <tr><td><code>UnsatisfiedLinkError</code> / <code>winutils</code> on Windows</td><td>Set <code>HADOOP_HOME</code> with <code>winutils.exe</code> + <code>hadoop.dll</code> in <code>bin\</code>, restart backend.</td></tr>
+        <tr><td>Local Spark rejected in Spark Settings</td><td>Use Spark <strong>4.1.x</strong> built for <strong>Scala 2.13</strong>. 3.5.x / Scala 2.12 won’t load the connectors.</td></tr>
+        <tr><td><code>ClassNotFoundException</code> for Delta/Iceberg</td><td>Keep Delta 4.3.x + Iceberg 4.1 runtime on Spark 4.1.x.</td></tr>
+        <tr><td>“Another instance of Derby may have already booted”</td><td>Only one JVM may open the metastore. Stop the backend before running <code>seed_demo.py</code> or other Spark scripts.</td></tr>
+        <tr><td>Table exists on disk but <code>TABLE_OR_VIEW_NOT_FOUND</code></td><td>It was created by an older in-memory session. Recreate it or re-run <code>seed_demo.py</code>.</td></tr>
+        <tr><td>Port already in use</td><td>Change the Uvicorn port and set <code>VITE_API_BASE_URL</code>; add the UI origin to <code>LAKEHOUSE_CORS_ORIGINS</code>.</td></tr>
+        <tr><td>Reset the lakehouse</td><td>Stop the backend, delete the <em>contents</em> of <code>data_warehouse/</code> and <code>.spark_metastore/</code> (keep the folders).</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="layout">Project layout</h2>
+    <pre><code>warehouse/
+├─ backend/                 FastAPI + single Spark session
+│  ├─ app/
+│  │  ├─ api/routes.py      REST endpoints
+│  │  ├─ services/          sql, pyspark, importer, catalog, spark_setup
+│  │  ├─ spark_manager.py   lazy session + execution lock
+│  │  └─ config.py          env-driven settings
+│  ├─ tests/                unit tests (no Spark required)
+│  ├─ seed_demo.py          creates demo Delta + Iceberg tables
+│  └─ requirements.txt
+├─ frontend/                React + TypeScript UI (port 5173)
+├─ frontend-ts/             second UI copy (port 5174)
+├─ data_warehouse/          Delta (delta/) + Iceberg (iceberg/) tables
+├─ .spark_metastore/        embedded Derby metastore (generated)
+├─ docs/                    getting-started + online book
+├─ scripts/                 start-backend / start-frontend / start-all
+└─ getting-started.html     this page</code></pre>
+
+    <h2>Next steps</h2>
+    <ol>
+      <li>Run a first <code>SELECT current_timestamp()</code> in the SQL editor.</li>
+      <li>Open <strong>Spark Settings</strong> and confirm the active Spark is the bundled 4.1.4.</li>
+      <li>Seed demo tables, then explore them in <strong>Schema Explorer</strong>.</li>
+      <li>Read the <a href="docs/book/index.html">online book</a> for Spark, Delta, and Iceberg patterns.</li>
+      <li>Browse the REST API at <a href="http://127.0.0.1:8000/docs" target="_blank">http://127.0.0.1:8000/docs</a>.</li>
+    </ol>
+
+    <footer>
+      <p>
+        Open Lakehouse Workbench · Getting Started ·
+        <a href="README.md">README</a> ·
+        <a href="docs/book/index.html">Book</a> ·
+        <a href="docs/getting-started.md">Markdown guide</a>
+      </p>
+      <p>Local-first. Binds to 127.0.0.1 with no authentication — run it on a single trusted workstation.</p>
+    </footer>
+  </div>
+</body>
+</html>

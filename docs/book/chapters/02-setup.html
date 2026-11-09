@@ -1,0 +1,92 @@
+l!DOCTYPE html>
+lhtml lang="en">
+lhead>
+  lmeta charset="UTF-8" />
+  lmeta name="viewport" content="width=device-width, initial-scale=1.0" />
+  ltitle>Chapter 2 — Setup & First Query | Big Data Transformation Bookl/title>
+  lstyle>
+    :root { --bg: #0b1120; --panel: #111827; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent-2: #f59e0b; --border: #1e293b; --code-bg: #070c16; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    .chapter-num { color: var(--muted); font-size: 0.95rem; }
+    h2 { color: var(--accent); margin-top: 2.5rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: "Fira Code", "Consolas", monospace; }
+    p code, li code { background: var(--panel); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin: 0.4rem 0; }
+    .note { background: var(--panel); border-left: 4px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+    .nav { display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  l/style>
+l/head>
+lbody>
+  ldiv class="container">
+    lheader>
+      lp class="chapter-num">Chapter 2l/p>
+      lh1>Setup &amp; First Queryl/h1>
+    l/header>
+
+    lh2>Prerequisitesl/h2>
+    lul>
+      lli>Python 3.10 or newerl/li>
+      lli>Java 17 or newer with lcode>JAVA_HOMEl/code> setl/li>
+      lli>Node.js 20 or newerl/li>
+      lli>Windows users: Hadoop lcode>winutils.exel/code> on PATH (see README)l/li>
+    l/ul>
+
+    lh2>Launch the backendl/h2>
+    lp>Open PowerShell in the repository root and run:l/p>
+    lpre>lcode>powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1l/code>l/pre>
+    lp>The first run creates a Python virtual environment and downloads Delta/Iceberg jars from Maven Central. This can take 30–90 seconds.l/p>
+
+    lh2>Launch the frontendl/h2>
+    lp>In a second terminal:l/p>
+    lpre>lcode>powershell -ExecutionPolicy Bypass -File .\scripts\start-frontend.ps1l/code>l/pre>
+
+    lh2>Your first queryl/h2>
+    lp>Open la href="http://127.0.0.1:5173" target="_blank">http://127.0.0.1:5173l/a>, paste this into the SQL editor, and press lcode>Ctrl+Enterl/code> (or lcode>Cmd+Enterl/code> on macOS):l/p>
+    lpre>lcode>SELECT
+  current_catalog()   AS active_catalog,
+  current_database()  AS active_database,
+  current_timestamp() AS now;
+l/code>l/pre>
+    lp>You should see one row showing the active catalog (lcode>spark_catalogl/code>), the active database (lcode>defaultl/code>), and the current timestamp.l/p>
+
+    lh2>Seed demo datal/h2>
+    lp>Stop the backend, then run:l/p>
+    lpre>lcode>cd backend
+.\.venv\Scripts\Activate.ps1
+python seed_demo.pyl/code>l/pre>
+    lp>This creates:l/p>
+    lul>
+      lli>lcode>demo.customersl/code> — a Delta table in lcode>spark_catalogl/code>l/li>
+      lli>lcode>local_iceberg.demo.salesl/code> — an Iceberg tablel/li>
+    l/ul>
+
+    ldiv class="note">
+      lstrong>Remember:l/strong> The embedded Derby metastore allows only one JVM at a time. Stop the backend before running lcode>seed_demo.pyl/code> or any other Spark script.
+    l/div>
+
+    lh2>Verify the tablesl/h2>
+    lp>Restart the backend and run:l/p>
+    lpre>lcode>SELECT * FROM demo.customers LIMIT 5;
+SELECT * FROM local_iceberg.demo.sales LIMIT 5;l/code>l/pre>
+
+    ldiv class="nav">
+      la href="01-introduction.html">← Introductionl/a>
+      la href="03-spark-sql.html">Next: Spark SQL Fundamentals →l/a>
+    l/div>
+
+    lfooter>
+      lp>Open Lakehouse Workbench · Chapter 2 · Setup &amp; First Queryl/p>
+    l/footer>
+  l/div>
+l/body>
+l/html>

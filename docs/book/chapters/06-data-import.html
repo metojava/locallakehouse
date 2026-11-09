@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 6 — Importing Data | Big Data Transformation Book</title>
+  <style>
+    :root { --bg: #0b1120; --panel: #111827; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent-2: #f59e0b; --border: #1e293b; --code-bg: #070c16; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    .chapter-num { color: var(--muted); font-size: 0.95rem; }
+    h2 { color: var(--accent); margin-top: 2.5rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: "Fira Code", "Consolas", monospace; }
+    p code, li code { background: var(--panel); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin: 0.4rem 0; }
+    .note { background: var(--panel); border-left: 4px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+    .nav { display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="chapter-num">Chapter 6</p>
+      <h1>Importing Data</h1>
+    </header>
+
+    <p>
+      The workbench can import local files and remote database tables. You choose the target format:
+      <strong>Delta</strong>, <strong>Iceberg</strong>, or a plain <strong>Spark</strong> table.
+    </p>
+
+    <h2>Import local files</h2>
+    <p>Click <strong>Import file</strong> in the SQL editor. Supported formats:</p>
+    <ul>
+      <li>CSV</li>
+      <li>JSON (line-delimited or multi-line array)</li>
+      <li>Parquet</li>
+      <li>TXT (treated as CSV)</li>
+      <li>ORC</li>
+      <li>Avro</li>
+    </ul>
+
+    <h3>Example: import JSON as Iceberg</h3>
+    <pre><code>-- After importing data/accounts.json as Iceberg with table name "accounts"
+SELECT * FROM local_iceberg.default.accounts LIMIT 10;
+
+SELECT state, COUNT(*) AS customers
+FROM local_iceberg.default.accounts
+GROUP BY state
+ORDER BY customers DESC
+LIMIT 10;</code></pre>
+
+    <h3>Example: import CSV as Delta</h3>
+    <p>Use the UI or the API. A sample request:</p>
+    <pre><code>POST /api/import-file
+{
+  "path": "C:\\data\\customers.csv",
+  "namespace": "default",
+  "table_format": "delta",
+  "source_format": "csv",
+  "mode": "error",
+  "has_header": true,
+  "delimiter": ","
+}</code></pre>
+
+    <h2>Import from databases</h2>
+    <p>There are two ways:</p>
+    <ol>
+      <li><strong>databases.cfg</strong> — create a config file in the repository root and browse tables on the <strong>Databases</strong> page.</li>
+      <li><strong>UI-managed connections</strong> — add a connection in <strong>Import → Database</strong>.</li>
+    </ol>
+
+    <h3>Sample databases.cfg</h3>
+    <pre><code>[postgresql.local_pg]
+name=Local PostgreSQL
+host=localhost
+port=5432
+database=sales_db
+username=postgres
+password=secret
+
+[mysql.local_mysql]
+name=Local MySQL
+host=localhost
+port=3306
+database=ecommerce
+username=root
+password=secret</code></pre>
+
+    <h3>Import a remote table via SQL</h3>
+    <pre><code>-- Import is done through the API; after importing the "orders" table
+SELECT * FROM spark_catalog.default.orders LIMIT 10;</code></pre>
+
+    <h2>Programmatic import with PySpark</h2>
+    <pre><code>df = (
+    spark.read.format("jdbc")
+    .option("url", "jdbc:postgresql://localhost:5432/sales_db")
+    .option("dbtable", "public.orders")
+    .option("user", "postgres")
+    .option("password", "secret")
+    .option("driver", "org.postgresql.Driver")
+    .load()
+)
+
+df.write.format("delta").mode("overwrite").saveAsTable("demo.orders_from_pg")</code></pre>
+
+    <div class="note">
+      <strong>Tip:</strong> For CSV and TXT files, always check the delimiter and header options. The importer tries to detect the format from the file extension, but you can override it.
+    </div>
+
+    <div class="nav">
+      <a href="05-apache-iceberg.html">← Apache Iceberg in Practice</a>
+      <a href="07-pyspark-transformations.html">Next: PySpark Transformations →</a>
+    </div>
+
+    <footer>
+      <p>Open Lakehouse Workbench · Chapter 6 · Importing Data</p>
+    </footer>
+  </div>
+</body>
+</html>

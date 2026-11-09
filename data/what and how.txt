@@ -1,0 +1,13 @@
+download accounts.json:
+
+https://github.com/linuxacademy/content-elasticsearch-deep-dive/blob/master/sample_data/accounts.json
+
+open git bash and run: 
+
+grep -v '{"index":{"_id"' accounts.json > temp.json && mv temp.json accountss.json
+
+
+after delete original accounts.json
+  
+rename accountss.json to accounts.json
+

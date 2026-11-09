@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 5 — Apache Iceberg in Practice | Big Data Transformation Book</title>
+  <style>
+    :root { --bg: #0b1120; --panel: #111827; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent-2: #f59e0b; --border: #1e293b; --code-bg: #070c16; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    .chapter-num { color: var(--muted); font-size: 0.95rem; }
+    h2 { color: var(--accent); margin-top: 2.5rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: "Fira Code", "Consolas", monospace; }
+    p code, li code { background: var(--panel); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin: 0.4rem 0; }
+    .note { background: var(--panel); border-left: 4px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+    .nav { display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="chapter-num">Chapter 5</p>
+      <h1>Apache Iceberg in Practice</h1>
+    </header>
+
+    <p>
+      Apache Iceberg is an open table format designed for huge analytic tables. It separates
+      physical storage from logical tables, supports hidden partitioning, and allows safe schema evolution.
+    </p>
+
+    <h2>Create an Iceberg table with partitioning</h2>
+    <pre><code>CREATE TABLE IF NOT EXISTS local_iceberg.demo.web_events (
+  event_id   BIGINT,
+  user_id    BIGINT,
+  event_type STRING,
+  page       STRING,
+  event_time TIMESTAMP
+) USING iceberg
+PARTITIONED BY (days(event_time));
+
+INSERT INTO local_iceberg.demo.web_events VALUES
+  (1, 1001, 'click', '/home',    TIMESTAMP '2026-01-15 08:30:00'),
+  (2, 1002, 'view',  '/pricing', TIMESTAMP '2026-01-15 09:00:00'),
+  (3, 1001, 'click', '/pricing', TIMESTAMP '2026-01-16 10:15:00'),
+  (4, 1003, 'view',  '/docs',    TIMESTAMP '2026-01-16 11:00:00');
+
+SELECT * FROM local_iceberg.demo.web_events ORDER BY event_time;</code></pre>
+
+    <h2>Hidden partitioning</h2>
+    <p>
+      The partition column <code>days(event_time)</code> is computed automatically. Queries that filter on
+      <code>event_time</code> benefit from partition pruning without users knowing the partition layout.
+    </p>
+    <pre><code>-- This query reads only the relevant day partition
+SELECT event_type, COUNT(*) AS events
+FROM local_iceberg.demo.web_events
+WHERE event_time >= TIMESTAMP '2026-01-16 00:00:00'
+GROUP BY event_type;</code></pre>
+
+    <h2>Snapshots and time travel</h2>
+    <pre><code>-- List snapshots
+SELECT * FROM local_iceberg.demo.web_events.snapshots;
+
+-- Query an earlier snapshot (replace the snapshot ID with one from the table above)
+SELECT * FROM local_iceberg.demo.web_events
+FOR SYSTEM_VERSION AS OF &lt;snapshot_id&gt;;</code></pre>
+
+    <h2>Schema evolution</h2>
+    <pre><code>-- Add a column
+ALTER TABLE local_iceberg.demo.web_events
+ADD COLUMN referrer STRING;
+
+-- Write data with the new column
+INSERT INTO local_iceberg.demo.web_events
+  (event_id, user_id, event_type, page, event_time, referrer)
+VALUES
+  (5, 1004, 'click', '/blog', TIMESTAMP '2026-01-17 12:00:00', 'google.com');
+
+SELECT * FROM local_iceberg.demo.web_events ORDER BY event_time;</code></pre>
+
+    <div class="note">
+      <strong>Remember:</strong> Iceberg tables are stored under <code>data_warehouse/iceberg</code>. The Hadoop catalog keeps all metadata in the warehouse, so you only need the files to move or back up a database.
+    </div>
+
+    <div class="nav">
+      <a href="04-delta-lake.html">← Delta Lake in Practice</a>
+      <a href="06-data-import.html">Next: Importing Data →</a>
+    </div>
+
+    <footer>
+      <p>Open Lakehouse Workbench · Chapter 5 · Apache Iceberg in Practice</p>
+    </footer>
+  </div>
+</body>
+</html>

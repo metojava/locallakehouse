@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 3 — Spark SQL Fundamentals | Big Data Transformation Book</title>
+  <style>
+    :root { --bg: #0b1120; --panel: #111827; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent-2: #f59e0b; --border: #1e293b; --code-bg: #070c16; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    .chapter-num { color: var(--muted); font-size: 0.95rem; }
+    h2 { color: var(--accent); margin-top: 2.5rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: "Fira Code", "Consolas", monospace; }
+    p code, li code { background: var(--panel); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin: 0.4rem 0; }
+    .note { background: var(--panel); border-left: 4px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+    .nav { display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="chapter-num">Chapter 3</p>
+      <h1>Spark SQL Fundamentals</h1>
+    </header>
+
+    <p>
+      Spark SQL lets you query data with familiar SQL syntax. The workbench exposes two catalogs:
+      <code>spark_catalog</code> (Delta-backed) and <code>local_iceberg</code> (Iceberg-backed).
+    </p>
+
+    <h2>Catalogs and namespaces</h2>
+    <pre><code>-- Show current catalog and database
+SELECT current_catalog(), current_database();
+
+-- Switch catalog
+USE local_iceberg;
+
+-- Switch namespace (database)
+USE demo;
+
+-- List namespaces
+SHOW NAMESPACES IN spark_catalog;
+SHOW NAMESPACES IN local_iceberg;</code></pre>
+
+    <h2>Creating tables</h2>
+    <h3>Delta table</h3>
+    <pre><code>CREATE TABLE IF NOT EXISTS demo.orders (
+  order_id    BIGINT,
+  customer_id BIGINT,
+  total       DOUBLE,
+  ordered_at  TIMESTAMP
+) USING delta;
+
+INSERT INTO demo.orders VALUES
+  (1001, 1, 249.99, current_timestamp()),
+  (1002, 2, 1899.00, current_timestamp());
+
+SELECT * FROM demo.orders;</code></pre>
+
+    <h3>Iceberg table</h3>
+    <pre><code>CREATE TABLE IF NOT EXISTS local_iceberg.demo.events (
+  event_id   BIGINT,
+  event_type STRING,
+  payload    STRING,
+  event_ts   TIMESTAMP
+) USING iceberg;
+
+INSERT INTO local_iceberg.demo.events VALUES
+  (1, 'page_view', '{"page":"/pricing"}', current_timestamp()),
+  (2, 'signup', '{"plan":"pro"}', current_timestamp());
+
+SELECT * FROM local_iceberg.demo.events;</code></pre>
+
+    <h2>Common transformations</h2>
+    <pre><code>-- Aggregation
+SELECT country, COUNT(*) AS customers
+FROM demo.customers
+GROUP BY country
+ORDER BY customers DESC;
+
+-- Join
+SELECT c.first_name, c.country, s.amount
+FROM demo.customers c
+JOIN local_iceberg.demo.sales s
+  ON c.id = s.customer_id
+LIMIT 100;
+
+-- Window function
+SELECT
+  customer_id,
+  amount,
+  SUM(amount) OVER (PARTITION BY customer_id ORDER BY sold_at) AS running_total
+FROM local_iceberg.demo.sales
+LIMIT 50;</code></pre>
+
+    <h2>Multiple statements</h2>
+    <p>Paste several statements separated by semicolons. The workbench runs them in order and returns the result of the last one.</p>
+    <pre><code>CREATE TABLE IF NOT EXISTS demo.metrics AS SELECT 1 AS id, 10.5 AS value;
+INSERT INTO demo.metrics VALUES (2, 20.0), (3, 30.0);
+SELECT * FROM demo.metrics ORDER BY id;</code></pre>
+
+    <div class="note">
+      <strong>Exercise:</strong> Create a Delta table that stores daily website visits by country, then write a query that ranks countries by total visits.
+    </div>
+
+    <div class="nav">
+      <a href="02-setup.html">← Setup &amp; First Query</a>
+      <a href="04-delta-lake.html">Next: Delta Lake in Practice →</a>
+    </div>
+
+    <footer>
+      <p>Open Lakehouse Workbench · Chapter 3 · Spark SQL Fundamentals</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.venv-corrupted/
+venv/
+venv-new/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.metastore/
+metastore_db/
+.spark_metastore/
+derby.log
+spark-warehouse/
+
+# Local lakehouse data (keep the directory, not the data)
+data_warehouse/*
+!data_warehouse/.gitkeep
+.spark_tmp/
+
+# UI-driven runtime overrides + optionally downloaded Spark distributions
+.runtime_settings.json
+.spark_dist/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/*.local
+frontend-ts/node_modules/
+frontend-ts/dist/
+frontend-ts/.env
+frontend-ts/*.local
+
+# Environment and tooling
+.env
+.env.local
+.idea/
+.vscode/
+*.log
+.DS_Store
+Thumbs.db

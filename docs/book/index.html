@@ -1,0 +1,103 @@
+l!DOCTYPE html>
+lhtml lang="en">
+lhead>
+  lmeta charset="UTF-8" />
+  lmeta name="viewport" content="width=device-width, initial-scale=1.0" />
+  ltitle>Big Data Transformation with Iceberg, Spark & Delta — Online Bookl/title>
+  lstyle>
+    :root {
+      --bg: #0b1120;
+      --panel: #111827;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #f59e0b;
+      --border: #1e293b;
+      --code-bg: #070c16;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+    h1 { font-size: 2.2rem; margin: 0 0 0.5rem; }
+    .subtitle { color: var(--muted); font-size: 1.1rem; }
+    h2 { color: var(--accent); margin-top: 2.5rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .toc { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; }
+    .toc ol { padding-left: 1.2rem; }
+    .toc li { margin: 0.6rem 0; }
+    .toc .chapter-link { font-weight: 600; }
+    .cta { margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--accent); color: #000;
+      padding: 0.65rem 1.2rem; border-radius: 8px; font-weight: 600;
+    }
+    .btn.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  l/style>
+l/head>
+lbody>
+  ldiv class="container">
+    lheader>
+      lh1>Big Data Transformation with Iceberg, Spark &amp; Deltal/h1>
+      lp class="subtitle">A hands-on guide using the Open Lakehouse Workbenchl/p>
+    l/header>
+
+    lp>
+      This book teaches you how to load, transform, and manage large datasets using Apache Spark,
+      Delta Lake, and Apache Iceberg — all from your own computer. The Open Lakehouse Workbench
+      gives you a SQL editor, a PySpark runner, and a local catalog so you can experiment without
+      cloud accounts or clusters.
+    l/p>
+
+    ldiv class="cta">
+      la class="btn" href="chapters/01-introduction.html">Start reading →l/a>
+      la class="btn secondary" href="index.md">Download Markdown versionl/a>
+      la class="btn secondary" href="../getting-started.html">Getting Started for Startupsl/a>
+    l/div>
+
+    lh2>Table of Contentsl/h2>
+    lnav class="toc">
+      lol>
+        lli>la class="chapter-link" href="chapters/01-introduction.html">Introductionl/a> — what the platform is and why it mattersl/li>
+        lli>la class="chapter-link" href="chapters/02-setup.html">Setup &amp; First Queryl/a> — install, launch, and run your first Spark SQLl/li>
+        lli>la class="chapter-link" href="chapters/03-spark-sql.html">Spark SQL Fundamentalsl/a> — SELECT, CREATE, INSERT, and time travell/li>
+        lli>la class="chapter-link" href="chapters/04-delta-lake.html">Delta Lake in Practicel/a> — ACID, upserts, and partitioningl/li>
+        lli>la class="chapter-link" href="chapters/05-apache-iceberg.html">Apache Iceberg in Practicel/a> — hidden partitioning, snapshots, and branchingl/li>
+        lli>la class="chapter-link" href="chapters/06-data-import.html">Importing Datal/a> — CSV, JSON, Parquet, TXT, ORC, Avro, and JDBC databasesl/li>
+        lli>la class="chapter-link" href="chapters/07-pyspark-transformations.html">PySpark Transformationsl/a> — DataFrame API, UDFs, and window functionsl/li>
+        lli>la class="chapter-link" href="chapters/08-real-world-project.html">Real-World Projectl/a> — build an end-to-end sales analytics pipelinel/li>
+      l/ol>
+    l/nav>
+
+    lh2>Who this book is forl/h2>
+    lul>
+      lli>Data engineers learning open table formatsl/li>
+      lli>Analysts who want to run Spark locallyl/li>
+      lli>Startups that need a fast, free lakehouse sandboxl/li>
+      lli>Students preparing for big-data certificationsl/li>
+    l/ul>
+
+    lh2>What you needl/h2>
+    lul>
+      lli>Windows, macOS, or Linuxl/li>
+      lli>Python 3.10+ and Java 17+l/li>
+      lli>Node.js 20+ for the UIl/li>
+      lli>No cloud account requiredl/li>
+    l/ul>
+
+    lfooter>
+      lp>Open Lakehouse Workbench · 100% local · Delta Lake · Apache Iceberg · Apache Sparkl/p>
+    l/footer>
+  l/div>
+l/body>
+l/html>

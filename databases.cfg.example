@@ -1,0 +1,23 @@
+[mysql.local_mysql]
+name=Local MySQL
+host=localhost
+port=3306
+database=mydb
+username=root
+password=changeme
+
+[postgresql.local_postgres]
+name=Local PostgreSQL
+host=localhost
+port=5432
+database=mydb
+username=postgres
+password=changeme
+
+[sqlserver.local_sqlserver]
+name=Local SQL Server
+host=localhost
+port=1433
+database=mydb
+username=sa
+password=Changeme1

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 7 — PySpark Transformations | Big Data Transformation Book</title>
+  <style>
+    :root { --bg: #0b1120; --panel: #111827; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent-2: #f59e0b; --border: #1e293b; --code-bg: #070c16; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    .chapter-num { color: var(--muted); font-size: 0.95rem; }
+    h2 { color: var(--accent); margin-top: 2.5rem; }
+    h3 { color: var(--accent-2); margin-top: 1.8rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: "Fira Code", "Consolas", monospace; }
+    p code, li code { background: var(--panel); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin: 0.4rem 0; }
+    .note { background: var(--panel); border-left: 4px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+    .nav { display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="chapter-num">Chapter 7</p>
+      <h1>PySpark Transformations</h1>
+    </header>
+
+    <p>
+      The <strong>PySpark Editor</strong> runs Python scripts against the shared SparkSession.
+      The variable <code>spark</code> is already available. Return or assign a DataFrame to see a preview.
+    </p>
+
+    <h2>Read and inspect data</h2>
+    <pre><code>df = spark.table("local_iceberg.demo.sales")
+
+print("Rows:", df.count())
+df.printSchema()
+df.show(5)
+
+# Return the DataFrame for a UI preview
+df</code></pre>
+
+    <h2>DataFrame transformations</h2>
+    <pre><code>from pyspark.sql import functions as F
+
+sales = spark.table("local_iceberg.demo.sales")
+
+result = (
+    sales
+    .filter(F.col("amount") &gt; 100)
+    .withColumn("year", F.year("sold_at"))
+    .groupBy("year", "country")
+    .agg(
+        F.count("*").alias("orders"),
+        F.sum("amount").alias("revenue"),
+        F.avg("amount").alias("avg_order")
+    )
+    .orderBy(F.desc("revenue"))
+)
+
+result</code></pre>
+
+    <h2>Window functions</h2>
+    <pre><code>from pyspark.sql.window import Window
+
+window_spec = Window.partitionBy("customer_id").orderBy("sold_at")
+
+ranked = (
+    sales
+    .withColumn("running_total", F.sum("amount").over(window_spec))
+    .withColumn("rank", F.row_number().over(window_spec))
+)
+
+ranked</code></pre>
+
+    <h2>User-defined functions (UDFs)</h2>
+    <pre><code>from pyspark.sql.functions import udf
+from pyspark.sql.types import StringType
+
+@udf(StringType())
+def tier(amount):
+    if amount &gt; 500:
+        return "gold"
+    if amount &gt; 100:
+        return "silver"
+    return "bronze"
+
+sales_with_tier = sales.withColumn("customer_tier", tier(F.col("amount")))
+sales_with_tier.groupBy("customer_tier").count()</code></pre>
+
+    <h2>Write results back</h2>
+    <pre><code># Write to a Delta table
+result.write.format("delta").mode("overwrite").saveAsTable("demo.sales_summary")
+
+# Write to an Iceberg table
+result.write.format("iceberg").mode("overwrite").saveAsTable("local_iceberg.demo.sales_summary")
+
+# Confirm
+spark.table("demo.sales_summary").show()</code></pre>
+
+    <div class="note">
+      <strong>Tip:</strong> PySpark uses lazy evaluation. Nothing executes until you call an action like <code>count()</code>, <code>show()</code>, or write. The workbench preview automatically triggers an action on the returned DataFrame.
+    </div>
+
+    <div class="nav">
+      <a href="06-data-import.html">← Importing Data</a>
+      <a href="08-real-world-project.html">Next: Real-World Project →</a>
+    </div>
+
+    <footer>
+      <p>Open Lakehouse Workbench · Chapter 7 · PySpark Transformations</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -66,7 +66,7 @@
 
     <h3>1. Install prerequisites</h3>
     <ul>
-      <li>Python 3.11+</li>
+      <li>Python 3.10+</li>
       <li>Java 17+</li>
       <li>Node.js 20+</li>
     </ul>
@@ -106,7 +106,7 @@ GROUP BY DATE(created_at);
 SELECT * FROM demo.daily_revenue ORDER BY day DESC LIMIT 30;</code></pre>
 
     <h3>Share results</h3>
-    <p>Copy query results from the UI (JSON), or query them via the REST API:</p>
+    <p>Export query results from the UI, or query them via the REST API:</p>
     <pre><code>curl.exe -X POST http://127.0.0.1:8000/api/execute-sql \
   -H "Content-Type: application/json" \
   -d '{"sql":"SELECT * FROM demo.daily_revenue ORDER BY day DESC LIMIT 30"}'</code></pre>

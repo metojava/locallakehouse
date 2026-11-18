@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mastering Apache Spark — 20 Real-World Data Engineering Projects in Python &amp; Java</title>
+<meta name="description" content="A build-it book: twenty production-grade Apache Spark projects implemented twice, in PySpark and in the Java API, with internals deep-dives and tuning guidance.">
+<meta name="author" content="Mastering Apache Spark">
+<meta name="generator" content="book/build.py">
+<style>
+/* pygments token colours */
+pre { line-height: 125%; }
+td.linenos .normal { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #ffffcc }
+.highlight { background: #f0f0f0; }
+.highlight .c { color: #60A0B0; font-style: italic } /* Comment */
+.highlight .err { border: 1px solid #F00 } /* Error */
+.highlight .k { color: #007020; font-weight: bold } /* Keyword */
+.highlight .o { color: #666 } /* Operator */
+.highlight .ch { color: #60A0B0; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #60A0B0; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #007020 } /* Comment.Preproc */
+.highlight .cpf { color: #60A0B0; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #60A0B0; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #60A0B0; background-color: #FFF0F0 } /* Comment.Special */
+.highlight .gd { color: #A00000 } /* Generic.Deleted */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #F00 } /* Generic.Error */
+.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #00A000 } /* Generic.Inserted */
+.highlight .go { color: #888 } /* Generic.Output */
+.highlight .gp { color: #C65D09; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.highlight .gt { color: #04D } /* Generic.Traceback */
+.highlight .kc { color: #007020; font-weight: bold } /* Keyword.Constant */
+.highlight .kd { color: #007020; font-weight: bold } /* Keyword.Declaration */
+.highlight .kn { color: #007020; font-weight: bold } /* Keyword.Namespace */
+.highlight .kp { color: #007020 } /* Keyword.Pseudo */
+.highlight .kr { color: #007020; font-weight: bold } /* Keyword.Reserved */
+.highlight .kt { color: #902000 } /* Keyword.Type */
+.highlight .m { color: #40A070 } /* Literal.Number */
+.highlight .s { color: #4070A0 } /* Literal.String */
+.highlight .na { color: #4070A0 } /* Name.Attribute */
+.highlight .nb { color: #007020 } /* Name.Builtin */
+.highlight .nc { color: #0E84B5; font-weight: bold } /* Name.Class */
+.highlight .no { color: #60ADD5 } /* Name.Constant */
+.highlight .nd { color: #555; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #D55537; font-weight: bold } /* Name.Entity */
+.highlight .ne { color: #007020 } /* Name.Exception */
+.highlight .nf { color: #06287E } /* Name.Function */
+.highlight .nl { color: #002070; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #0E84B5; font-weight: bold } /* Name.Namespace */
+.highlight .nt { color: #062873; font-weight: bold } /* Name.Tag */
+.highlight .nv { color: #BB60D5 } /* Name.Variable */
+.highlight .ow { color: #007020; font-weight: bold } /* Operator.Word */
+.highlight .w { color: #BBB } /* Text.Whitespace */
+.highlight .mb { color: #40A070 } /* Literal.Number.Bin */
+.highlight .mf { color: #40A070 } /* Literal.Number.Float */
+.highlight .mh { color: #40A070 } /* Literal.Number.Hex */
+.highlight .mi { color: #40A070 } /* Literal.Number.Integer */
+.highlight .mo { color: #40A070 } /* Literal.Number.Oct */
+.highlight .sa { color: #4070A0 } /* Literal.String.Affix */
+.highlight .sb { color: #4070A0 } /* Literal.String.Backtick */
+.highlight .sc { color: #4070A0 } /* Literal.String.Char */
+.highlight .dl { color: #4070A0 } /* Literal.String.Delimiter */
+.highlight .sd { color: #4070A0; font-style: italic } /* Literal.String.Doc */
+.highlight .s2 { color: #4070A0 } /* Literal.String.Double */
+.highlight .se { color: #4070A0; font-weight: bold } /* Literal.String.Escape */
+.highlight .sh { color: #4070A0 } /* Literal.String.Heredoc */
+.highlight .si { color: #70A0D0; font-style: italic } /* Literal.String.Interpol */
+.highlight .sx { color: #C65D09 } /* Literal.String.Other */
+.highlight .sr { color: #235388 } /* Literal.String.Regex */
+.highlight .s1 { color: #4070A0 } /* Literal.String.Single */
+.highlight .ss { color: #517918 } /* Literal.String.Symbol */
+.highlight .bp { color: #007020 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #06287E } /* Name.Function.Magic */
+.highlight .vc { color: #BB60D5 } /* Name.Variable.Class */
+.highlight .vg { color: #BB60D5 } /* Name.Variable.Global */
+.highlight .vi { color: #BB60D5 } /* Name.Variable.Instance */
+.highlight .vm { color: #BB60D5 } /* Name.Variable.Magic */
+.highlight .il { color: #40A070 } /* Literal.Number.Integer.Long */
+</style>
+<style>
+/* ==========================================================================
+   Mastering Apache Spark — book stylesheet
+   Light, print-ready, GitHub-quality typography. No external dependencies.
+   ========================================================================== */
+
+:root {
+  --ink: #1c2128;
+  --ink-soft: #4a5561;
+  --ink-faint: #6b7683;
+  --paper: #fdfdfb;
+  --paper-alt: #f6f7f4;
+  --rule: #e2e4df;
+  --rule-strong: #cfd3cc;
+  --accent: #b5430f;
+  --accent-soft: #fbf1ea;
+  --code-bg: #f7f8fa;
+  --code-border: #e4e7ec;
+  --sidebar-bg: #f8f7f3;
+  --sidebar-w: 312px;
+  --topbar-h: 56px;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.72;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- top bar + progress ------------------------------------------- */
+
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background: linear-gradient(90deg, #e0803d, var(--accent));
+  z-index: 60;
+  transition: width 80ms linear;
+}
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  background: rgba(253, 253, 251, 0.92);
+  backdrop-filter: saturate(180%) blur(10px);
+  border-bottom: 1px solid var(--rule);
+  z-index: 50;
+  font-family: var(--font-sans);
+}
+
+.topbar .brand {
+  font-weight: 700;
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.topbar .brand-sub {
+  font-size: 12px;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar .spacer { flex: 1; }
+
+.nav-toggle,
+.print-btn {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: #fff;
+  border: 1px solid var(--rule-strong);
+  border-radius: 6px;
+  padding: 6px 11px;
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms, background 120ms;
+}
+
+.nav-toggle:hover,
+.print-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.nav-toggle { display: none; font-size: 15px; line-height: 1; padding: 5px 10px; }
+
+/* ---------- layout -------------------------------------------------------- */
+
+.layout {
+  display: flex;
+  align-items: flex-start;
+  padding-top: var(--topbar-h);
+}
+
+.sidebar {
+  position: fixed;
+  top: var(--topbar-h);
+  bottom: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--rule);
+  padding: 22px 0 40px;
+  font-family: var(--font-sans);
+  scrollbar-width: thin;
+}
+
+.sidebar::-webkit-scrollbar { width: 9px; }
+.sidebar::-webkit-scrollbar-thumb { background: #d7d8d2; border-radius: 8px; }
+
+.nav { padding: 0 16px 8px; }
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-list .nav-list {
+  margin: 2px 0 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--rule);
+}
+
+.nav-list li { margin: 0; }
+
+.nav-list a {
+  display: block;
+  padding: 5px 9px;
+  margin: 1px 0;
+  border-radius: 5px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 12.5px;
+  line-height: 1.42;
+  transition: color 110ms, background 110ms;
+}
+
+.nav-list a:hover { color: var(--accent); background: rgba(181, 67, 15, 0.06); }
+
+.nav-list a.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 650;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.nav-list li.lvl-1 > a {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 13.5px;
+  margin-top: 16px;
+  letter-spacing: -0.008em;
+}
+
+.nav-list li.lvl-2 > a {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 12.8px;
+}
+
+.nav-list li.lvl-3 > a {
+  font-weight: 450;
+  font-size: 12.2px;
+  color: var(--ink-soft);
+}
+
+.nav-list li.lvl-4 > a { font-size: 12px; }
+
+.sidebar-foot {
+  margin: 18px 24px 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  line-height: 1.55;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sidebar-w);
+  padding: 0 0 100px;
+}
+
+.main#top { scroll-margin-top: var(--topbar-h); }
+
+.content,
+.book-cover,
+.toc-inline,
+.book-footer {
+  max-width: 76ch;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+/* ---------- cover --------------------------------------------------------- */
+
+.book-cover {
+  padding-top: 72px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 44px;
+}
+
+.book-cover h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(2.1rem, 4.4vw, 3.15rem);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+
+.book-cover h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.02rem, 1.9vw, 1.32rem);
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--accent);
+  margin: 0 0 22px;
+  line-height: 1.35;
+}
+
+.book-cover p { font-size: 1.02rem; }
+
+.book-cover p:has(strong:only-child) {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+  text-transform: none;
+}
+
+.book-cover h3 {
+  font-family: var(--font-sans);
+  font-size: 1.22rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 44px 0 12px;
+}
+
+.book-cover hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 34px 0;
+}
+
+/* ---------- inline table of contents ------------------------------------- */
+
+.toc-inline {
+  margin-bottom: 60px;
+  scroll-margin-top: calc(var(--topbar-h) + 20px);
+}
+
+.toc-inline h2 {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+
+.toc-inline ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: toc;
+  font-family: var(--font-sans);
+}
+
+.toc-inline ol ol {
+  margin: 2px 0 10px 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--rule);
+}
+
+.toc-inline li { margin: 0; }
+
+.toc-inline a {
+  display: block;
+  padding: 4px 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+}
+
+.toc-inline a:hover { color: var(--accent); border-bottom-color: var(--rule-strong); }
+
+.toc-inline > ol > li > a {
+  font-size: 15.5px;
+  font-weight: 650;
+  color: var(--ink);
+  padding-top: 10px;
+}
+
+/* ---------- article typography ------------------------------------------- */
+
+article h1,
+article h2,
+article h3,
+article h4 {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  scroll-margin-top: calc(var(--topbar-h) + 22px);
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+}
+
+article h1 {
+  font-size: 2.15rem;
+  font-weight: 800;
+  margin: 78px 0 26px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid var(--ink);
+}
+
+article > h1:first-child { margin-top: 0; }
+
+article h2 {
+  font-size: 1.52rem;
+  font-weight: 750;
+  margin: 62px 0 18px;
+  padding-top: 22px;
+  border-top: 1px solid var(--rule);
+  letter-spacing: -0.022em;
+}
+
+article h3 {
+  font-size: 1.16rem;
+  font-weight: 700;
+  margin: 40px 0 12px;
+}
+
+article h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 30px 0 10px;
+  color: var(--ink-soft);
+}
+
+article p { margin: 0 0 1.05em; }
+
+article strong { font-weight: 700; color: #11161c; }
+
+article em { font-style: italic; }
+
+article a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(181, 67, 15, 0.28);
+  transition: border-color 120ms;
+}
+
+article a:hover { border-bottom-color: var(--accent); }
+
+article ul,
+article ol {
+  margin: 0 0 1.15em;
+  padding-left: 1.5em;
+}
+
+article li { margin: 0 0 0.42em; }
+
+article li > ul,
+article li > ol { margin-top: 0.42em; margin-bottom: 0.5em; }
+
+article hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 46px 0;
+}
+
+/* Enterprise-grade prose needs breathing room around tables and code. */
+article table + p,
+article pre + p,
+article table + pre,
+article pre + table { margin-top: 1.35em; }
+
+/* ---------- tables -------------------------------------------------------- */
+
+article table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0 1.7em;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  display: table;
+}
+
+article thead th {
+  text-align: left;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 10px 14px 10px 0;
+  border-bottom: 1px solid var(--rule-strong);
+  vertical-align: bottom;
+}
+
+article tbody td {
+  padding: 10px 14px 10px 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+article tbody tr:last-child td { border-bottom: 0; }
+
+article tbody tr:hover { background: rgba(181, 67, 15, 0.03); }
+
+article table code {
+  font-size: 12.5px;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* ---------- code ---------------------------------------------------------- */
+
+article code,
+.book-cover code {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
+  padding: 0.12em 0.34em;
+  color: #8a2f0a;
+  white-space: nowrap;
+}
+
+article pre,
+.book-cover pre {
+  position: relative;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 1.4em 0 1.7em;
+  font-size: 13px;
+  line-height: 1.62;
+  tab-size: 2;
+}
+
+article pre code,
+.book-cover pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+  white-space: pre;
+}
+
+.highlight {
+  background: transparent;
+  margin: 1.4em 0 1.7em;
+  border-radius: 8px;
+  position: relative;
+}
+
+.highlight pre {
+  margin: 0;
+  border: 1px solid var(--code-border);
+  background: var(--code-bg);
+}
+
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--code-border);
+  border-radius: 5px;
+  padding: 3px 7px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 130ms, color 130ms, border-color 130ms;
+  z-index: 2;
+}
+
+pre:hover > .copy-btn,
+.copy-btn:focus { opacity: 1; }
+
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+.copy-btn.copied { color: #1a7f37; border-color: #1a7f37; opacity: 1; }
+
+/* ---------- blockquotes as callouts -------------------------------------- */
+
+article blockquote {
+  margin: 1.6em 0;
+  padding: 16px 22px;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  color: #3d2a20;
+  font-size: 0.97em;
+}
+
+article blockquote p { margin: 0 0 0.6em; }
+article blockquote p:last-child { margin-bottom: 0; }
+article blockquote code { background: #fff; border-color: #edd9cb; }
+
+/* ---------- footer -------------------------------------------------------- */
+
+.book-footer {
+  margin-top: 80px;
+  padding-top: 26px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  line-height: 1.6;
+}
+
+.book-footer strong { color: var(--ink-soft); }
+
+.chapter-break { display: none; }
+
+/* ---------- responsive ---------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .content,
+  .book-cover,
+  .toc-inline,
+  .book-footer { padding-left: 30px; padding-right: 30px; }
+}
+
+@media (max-width: 900px) {
+  :root { --sidebar-w: 290px; }
+  .nav-toggle { display: inline-block; }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 220ms ease;
+    z-index: 45;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .brand-sub { display: none; }
+  article table { display: block; overflow-x: auto; }
+  body { font-size: 17px; }
+}
+
+@media (max-width: 600px) {
+  .content,
+  .book-cover,
+  .toc-inline,
+  .book-footer { padding-left: 20px; padding-right: 20px; }
+  article h1 { font-size: 1.72rem; }
+  article h2 { font-size: 1.3rem; margin-top: 48px; }
+  article pre { font-size: 12px; padding: 13px; }
+}
+
+/* ---------- print / PDF --------------------------------------------------- */
+
+@page {
+  margin: 18mm 16mm;
+}
+
+@media print {
+  :root { --ink: #000; }
+
+  body {
+    font-size: 10.5pt;
+    line-height: 1.55;
+    background: #fff;
+  }
+
+  .topbar,
+  .sidebar,
+  .progress,
+  .copy-btn,
+  .toc-inline { display: none !important; }
+
+  .layout { display: block; padding-top: 0; }
+  .main { margin-left: 0; }
+
+  .content,
+  .book-cover,
+  .book-footer {
+    max-width: none;
+    padding: 0;
+  }
+
+  .chapter-break {
+    display: block;
+    break-before: page;
+    page-break-before: always;
+    height: 0;
+  }
+
+  article h1:first-child { margin-top: 0; }
+
+  article h2,
+  article h3 { break-after: avoid; page-break-after: avoid; }
+
+  article pre,
+  article table,
+  article blockquote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  article pre { font-size: 8.4pt; border: 1px solid #ccc; background: #fafafa; }
+  article a { color: #000; border-bottom: 0; }
+  article table { font-size: 9pt; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<header class="topbar">
+  <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation">&#9776;</button>
+  <a class="brand" href="#top">Mastering Apache Spark</a>
+  <span class="brand-sub">Apache Spark 3.5.x · Java 17 · Python 3.10+ · First Edition</span>
+  <span class="spacer"></span>
+  <button class="print-btn" type="button" onclick="window.print()">Print / PDF</button>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav class="nav" aria-label="Table of contents">
+      <ul class="nav-list nav-list-root">
+        <li class="lvl-1"><a href="#top">Cover &amp; Introduction</a></li>
+        <li class="lvl-1"><a href="#contents">Contents</a></li>
+      </ul>
+      <ul class="nav-list"><li class="lvl-1"><a href="#environment-setup">Environment Setup</a><ul class="nav-list"><li class="lvl-2"><a href="#0-version-matrix-pin-these">0. Version matrix (pin these)</a></li><li class="lvl-2"><a href="#1-install-java-17">1. Install Java 17</a></li><li class="lvl-2"><a href="#2-install-apache-spark-353">2. Install Apache Spark 3.5.3</a></li><li class="lvl-2"><a href="#3-windows-winutilsexe-and-hadoopdll-mandatory">3. Windows: winutils.exe and hadoop.dll (mandatory)</a></li><li class="lvl-2"><a href="#4-python-environment">4. Python environment</a></li><li class="lvl-2"><a href="#5-configure-spark-defaults-java-17-add-opens">5. Configure Spark defaults (Java 17 --add-opens)</a></li><li class="lvl-2"><a href="#6-maven">6. Maven</a></li><li class="lvl-2"><a href="#7-docker-needed-from-part-iii-onward">7. Docker (needed from Part III onward)</a></li><li class="lvl-2"><a href="#8-smoke-test-python">8. Smoke test — Python</a></li><li class="lvl-2"><a href="#9-smoke-test-java">9. Smoke test — Java</a></li><li class="lvl-2"><a href="#10-troubleshooting-matrix">10. Troubleshooting matrix</a></li><li class="lvl-2"><a href="#11-cluster-submit-delta">11. Cluster submit delta</a></li></ul></li><li class="lvl-1"><a href="#the-20-project-master-syllabus">The 20-Project Master Syllabus</a><ul class="nav-list"><li class="lvl-2"><a href="#summary-map">Summary map</a></li><li class="lvl-2"><a href="#part-i-foundations-batch-etl">Part I — Foundations &amp; Batch ETL</a><ul class="nav-list"><li class="lvl-3"><a href="#project-1-retail-order-etl-csv-parquet-medallion-pipeline">Project 1 · Retail Order ETL: CSV → Parquet Medallion Pipeline</a></li><li class="lvl-3"><a href="#project-2-customer-360-identity-resolution-deduplication-at-scale">Project 2 · Customer 360: Identity Resolution &amp; Deduplication at Scale</a></li><li class="lvl-3"><a href="#project-3-clickstream-sessionization-conversion-funnel">Project 3 · Clickstream Sessionization &amp; Conversion Funnel</a></li><li class="lvl-3"><a href="#project-4-scd-type-2-dimension-loader-idempotent-upsert-on-parquet">Project 4 · SCD Type 2 Dimension Loader (Idempotent Upsert on Parquet)</a></li><li class="lvl-3"><a href="#project-5-log-mining-anomaly-detection-with-skew-handling">Project 5 · Log Mining &amp; Anomaly Detection with Skew Handling</a></li></ul></li><li class="lvl-2"><a href="#part-ii-optimization-joins-data-quality">Part II — Optimization, Joins &amp; Data Quality</a><ul class="nav-list"><li class="lvl-3"><a href="#project-6-star-schema-join-optimization-laboratory">Project 6 · Star-Schema Join Optimization Laboratory</a></li><li class="lvl-3"><a href="#project-7-file-layout-engineering-partitioning-bucketing-compaction">Project 7 · File Layout Engineering: Partitioning, Bucketing &amp; Compaction</a></li><li class="lvl-3"><a href="#project-8-semi-structured-ingestion-nested-json-xml-schema-evolution">Project 8 · Semi-Structured Ingestion: Nested JSON, XML &amp; Schema Evolution</a></li><li class="lvl-3"><a href="#project-9-query-acceleration-lab-caching-plans-benchmarks">Project 9 · Query Acceleration Lab: Caching, Plans &amp; Benchmarks</a></li><li class="lvl-3"><a href="#project-10-declarative-data-quality-framework-with-quarantine">Project 10 · Declarative Data Quality Framework with Quarantine</a></li></ul></li><li class="lvl-2"><a href="#part-iii-streaming-real-time">Part III — Streaming &amp; Real-Time</a><ul class="nav-list"><li class="lvl-3"><a href="#project-11-kafka-structured-streaming-bronze-ingestion-exactly-once">Project 11 · Kafka → Structured Streaming Bronze Ingestion (Exactly-Once)</a></li><li class="lvl-3"><a href="#project-12-watermarks-late-data-deduplication">Project 12 · Watermarks, Late Data &amp; Deduplication</a></li><li class="lvl-3"><a href="#project-13-stateful-fraud-detection-with-applyinpandaswithstate">Project 13 · Stateful Fraud Detection with applyInPandasWithState</a></li><li class="lvl-3"><a href="#project-14-streaming-joins-enrichment-and-interval-correlation">Project 14 · Streaming Joins: Enrichment and Interval Correlation</a></li><li class="lvl-3"><a href="#project-15-real-time-sink-idempotency-streaming-observability">Project 15 · Real-Time Sink, Idempotency &amp; Streaming Observability</a></li></ul></li><li class="lvl-2"><a href="#part-iv-lakehouse-machine-learning-at-scale">Part IV — Lakehouse &amp; Machine Learning at Scale</a><ul class="nav-list"><li class="lvl-3"><a href="#project-16-apache-iceberg-lakehouse-merge-time-travel-maintenance">Project 16 · Apache Iceberg Lakehouse: MERGE, Time Travel &amp; Maintenance</a></li><li class="lvl-3"><a href="#project-17-delta-lake-medallion-architecture-bronzesilvergold">Project 17 · Delta Lake Medallion Architecture (Bronze/Silver/Gold)</a></li><li class="lvl-3"><a href="#project-18-point-in-time-correct-feature-engineering">Project 18 · Point-in-Time Correct Feature Engineering</a></li><li class="lvl-3"><a href="#project-19-mllib-churn-prediction-end-to-end">Project 19 · MLlib Churn Prediction End-to-End</a></li><li class="lvl-3"><a href="#project-20-capstone-real-time-recommendation-production-hardening">Project 20 · Capstone: Real-Time Recommendation &amp; Production Hardening</a></li></ul></li><li class="lvl-2"><a href="#what-you-will-be-able-to-say-after-project-20">What you will be able to say after Project 20</a></li></ul></li></ul>
+    </nav>
+    <div class="sidebar-foot">
+      <strong>3 source file(s)</strong><br>
+      Built 13 November 2026
+    </div>
+  </aside>
+
+  <main class="main" id="top">
+
+    <header class="book-cover">
+      <h1>Mastering Apache Spark</h1>
+<h2>20 Real-World Data Engineering Projects in Python &amp; Java</h2>
+<p><strong>Apache Spark 3.5.x · Java 17 · Python 3.10+ · First Edition</strong></p>
+<hr>
+<h3>A build-it book for production data engineering</h3>
+<p>Most Spark material teaches you <code>df.groupBy().count()</code> and stops. Production data engineering starts <em>after</em> that — where schemas drift, keys skew, files multiply into the millions, streams arrive late, upserts must be idempotent, and the same job has to run identically from a laptop and a 200-node cluster.</p>
+<p>This book is a <strong>build-it book</strong>. Twenty self-contained projects, each one a slice of a real production system. Every chapter ships with:</p>
+<ul>
+<li>a <strong>synthetic data generator</strong> so you never need a cloud account or a proprietary dataset,</li>
+<li>a <strong>complete, runnable PySpark module</strong>,</li>
+<li>a <strong>complete, runnable Java (Spark Java API) module</strong> with a full <code>pom.xml</code>,</li>
+<li>an <strong>internals deep-dive</strong> explaining <em>why</em> the code behaves the way it does at the Catalyst / Tungsten / scheduler level,</li>
+<li>and <strong>tuning guidance</strong> grounded in measurable effects, not folklore.</li>
+</ul>
+<p>Nothing is stubbed. No <code>// TODO</code>, no "left as an exercise", no <code>...</code>. If a file is listed, it is complete and it compiles.</p>
+<hr>
+<h3>Who this book is for</h3>
+<table>
+<thead>
+<tr>
+<th>You are…</th>
+<th>You get…</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A data engineer moving from pandas/SQL to distributed compute</td>
+<td>A mental model of partitions, shuffles and the Catalyst optimizer that survives contact with production</td>
+</tr>
+<tr>
+<td>A Python developer forced to ship Java/Scala Spark jobs</td>
+<td>A line-by-line Python ↔ Java API translation in every chapter</td>
+</tr>
+<tr>
+<td>A Java engineer inheriting a Spark platform</td>
+<td>Idiomatic <code>Dataset&lt;T&gt;</code> code, <code>Encoders</code>, <code>TypedColumn</code>, and why <code>Row</code>-based code is often the wrong default</td>
+</tr>
+<tr>
+<td>A senior engineer preparing for platform/architecture work</td>
+<td>Lakehouse table formats, stateful streaming, point-in-time feature correctness, and observability patterns</td>
+</tr>
+</tbody>
+</table>
+<h3>The dual-language contract</h3>
+<p>Every project is implemented <strong>twice</strong> — PySpark and Java — against the <em>same</em> input data and producing the <em>same</em> output. This is deliberate. It forces you to confront the places where the two APIs genuinely diverge:</p>
+<ul>
+<li>Python <code>udf</code> vs Java <code>UDF1..UDF22</code> / <code>MapFunction</code>, and JVM-versus-Python serialization cost</li>
+<li>Lazy <code>Column</code> expressions vs typed <code>Column</code> / <code>TypedColumn</code> with <code>Encoders</code></li>
+<li><code>foreachBatch</code> closures capturing Python state vs Java <code>VoidFunction2&lt;Dataset&lt;Row&gt;, Long&gt;</code></li>
+<li>Checkpoint and state-store shapes in <code>applyInPandasWithState</code> vs <code>flatMapGroupsWithState</code></li>
+<li>Build and runtime packaging: <code>--py-files</code> vs shaded jars vs <code>provided</code> scope</li>
+</ul>
+<h3>Book conventions</h3>
+<table>
+<thead>
+<tr>
+<th>Convention</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$BOOK_HOME</code></td>
+<td>Root of your working directory. All paths are relative to it.</td>
+</tr>
+<tr>
+<td><code>file:///</code> URIs</td>
+<td>Used for all local I/O so behaviour matches HDFS / S3 semantics.</td>
+</tr>
+<tr>
+<td>Dataset sizes</td>
+<td>Every generator produces data sized for a <strong>laptop</strong>: 50k–5M rows, 1–3 min runtimes in <code>local[*]</code>.</td>
+</tr>
+<tr>
+<td><code>local[*]</code></td>
+<td>Default master. Every chapter notes the cluster-submit delta.</td>
+</tr>
+<tr>
+<td>Version pins</td>
+<td>Spark <strong>3.5.3</strong>, Scala <strong>2.12</strong>, Java <strong>17</strong>, Python <strong>3.10/3.11</strong>. Patch differences within 3.5.x are drop-in.</td>
+</tr>
+<tr>
+<td>Paths on Windows</td>
+<td>PowerShell uses backslashes and <code>`</code> for line continuation; <code>bash</code> examples use <code>/</code> and <code>\</code>.</td>
+</tr>
+<tr>
+<td>Logging</td>
+<td>All jobs use <code>logging</code> (Python) / SLF4J (Java) — never bare <code>print</code> / <code>System.out</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3>Repository layout you will build</h3>
+<div class="highlight"><pre><span></span><code>spark-mastery/
+├── data/                                  # generated datasets (git-ignored)
+├── lib/
+│   ├── spark_session.py                   # shared session factory (Project 1)
+│   └── quality.py                         # rules engine (Project 10)
+├── projects/
+│   ├── p01_retail_etl/
+│   │   ├── generate_data.py
+│   │   ├── retail_etl.py
+│   │   └── java/
+│   │       ├── pom.xml
+│   │       └── src/main/java/com/sparkmastery/p01/RetailEtlJob.java
+│   ├── p02_customer_360/
+│   └── ...
+└── README.md
+</code></pre></div>
+
+<h3>How each chapter is structured</h3>
+<ol>
+<li><strong>Business Problem &amp; Architecture</strong> — the scenario, the pipeline data flow, and the engineering argument for Spark.</li>
+<li><strong>Sample Data Generator</strong> — standalone Python, <code>faker</code> + <code>random</code> + <code>csv</code>/<code>json</code>, no external downloads.</li>
+<li><strong>Spark Internals &amp; Mechanics</strong> — the optimizer / scheduler / state-store reality behind the code.</li>
+<li><strong>Complete PySpark Implementation</strong> — typed, logged, modular, plus the exact <code>spark-submit</code>.</li>
+<li><strong>Complete Java Implementation</strong> — full <code>pom.xml</code>, full class, plus <code>mvn clean package</code> and <code>spark-submit</code>.</li>
+<li><strong>Code Walkthrough &amp; Tuning Tips</strong> — key logic, Python vs Java nuance, three production optimizations.</li>
+</ol>
+<p><strong>Pacing.</strong> Roughly 60–120 minutes per chapter if you run everything; about 25 minutes if you read only. Parts I and II are sequential. Part III and Part IV chapters are independent but assume the shared <code>lib/</code> helpers introduced earlier.</p>
+<blockquote>
+<p><strong>Verification gate.</strong> Before starting Project 1, complete the Environment Setup chapter and get both smoke tests — Python and Java — to print <code>SMOKE TEST PASSED</code>. Every chapter in this book then runs unmodified.</p>
+</blockquote>
+    </header>
+
+    <section class="toc-inline" id="contents">
+      <h2>Contents</h2>
+      <ol><li><a href="#environment-setup">Environment Setup</a><ol><li><a href="#0-version-matrix-pin-these">0. Version matrix (pin these)</a></li><li><a href="#1-install-java-17">1. Install Java 17</a></li><li><a href="#2-install-apache-spark-353">2. Install Apache Spark 3.5.3</a></li><li><a href="#3-windows-winutilsexe-and-hadoopdll-mandatory">3. Windows: winutils.exe and hadoop.dll (mandatory)</a></li><li><a href="#4-python-environment">4. Python environment</a></li><li><a href="#5-configure-spark-defaults-java-17-add-opens">5. Configure Spark defaults (Java 17 --add-opens)</a></li><li><a href="#6-maven">6. Maven</a></li><li><a href="#7-docker-needed-from-part-iii-onward">7. Docker (needed from Part III onward)</a></li><li><a href="#8-smoke-test-python">8. Smoke test — Python</a></li><li><a href="#9-smoke-test-java">9. Smoke test — Java</a></li><li><a href="#10-troubleshooting-matrix">10. Troubleshooting matrix</a></li><li><a href="#11-cluster-submit-delta">11. Cluster submit delta</a></li></ol></li><li><a href="#the-20-project-master-syllabus">The 20-Project Master Syllabus</a><ol><li><a href="#summary-map">Summary map</a></li><li><a href="#part-i-foundations-batch-etl">Part I — Foundations &amp; Batch ETL</a><ol><li><a href="#project-1-retail-order-etl-csv-parquet-medallion-pipeline">Project 1 · Retail Order ETL: CSV → Parquet Medallion Pipeline</a></li><li><a href="#project-2-customer-360-identity-resolution-deduplication-at-scale">Project 2 · Customer 360: Identity Resolution &amp; Deduplication at Scale</a></li><li><a href="#project-3-clickstream-sessionization-conversion-funnel">Project 3 · Clickstream Sessionization &amp; Conversion Funnel</a></li><li><a href="#project-4-scd-type-2-dimension-loader-idempotent-upsert-on-parquet">Project 4 · SCD Type 2 Dimension Loader (Idempotent Upsert on Parquet)</a></li><li><a href="#project-5-log-mining-anomaly-detection-with-skew-handling">Project 5 · Log Mining &amp; Anomaly Detection with Skew Handling</a></li></ol></li><li><a href="#part-ii-optimization-joins-data-quality">Part II — Optimization, Joins &amp; Data Quality</a><ol><li><a href="#project-6-star-schema-join-optimization-laboratory">Project 6 · Star-Schema Join Optimization Laboratory</a></li><li><a href="#project-7-file-layout-engineering-partitioning-bucketing-compaction">Project 7 · File Layout Engineering: Partitioning, Bucketing &amp; Compaction</a></li><li><a href="#project-8-semi-structured-ingestion-nested-json-xml-schema-evolution">Project 8 · Semi-Structured Ingestion: Nested JSON, XML &amp; Schema Evolution</a></li><li><a href="#project-9-query-acceleration-lab-caching-plans-benchmarks">Project 9 · Query Acceleration Lab: Caching, Plans &amp; Benchmarks</a></li><li><a href="#project-10-declarative-data-quality-framework-with-quarantine">Project 10 · Declarative Data Quality Framework with Quarantine</a></li></ol></li><li><a href="#part-iii-streaming-real-time">Part III — Streaming &amp; Real-Time</a><ol><li><a href="#project-11-kafka-structured-streaming-bronze-ingestion-exactly-once">Project 11 · Kafka → Structured Streaming Bronze Ingestion (Exactly-Once)</a></li><li><a href="#project-12-watermarks-late-data-deduplication">Project 12 · Watermarks, Late Data &amp; Deduplication</a></li><li><a href="#project-13-stateful-fraud-detection-with-applyinpandaswithstate">Project 13 · Stateful Fraud Detection with applyInPandasWithState</a></li><li><a href="#project-14-streaming-joins-enrichment-and-interval-correlation">Project 14 · Streaming Joins: Enrichment and Interval Correlation</a></li><li><a href="#project-15-real-time-sink-idempotency-streaming-observability">Project 15 · Real-Time Sink, Idempotency &amp; Streaming Observability</a></li></ol></li><li><a href="#part-iv-lakehouse-machine-learning-at-scale">Part IV — Lakehouse &amp; Machine Learning at Scale</a><ol><li><a href="#project-16-apache-iceberg-lakehouse-merge-time-travel-maintenance">Project 16 · Apache Iceberg Lakehouse: MERGE, Time Travel &amp; Maintenance</a></li><li><a href="#project-17-delta-lake-medallion-architecture-bronzesilvergold">Project 17 · Delta Lake Medallion Architecture (Bronze/Silver/Gold)</a></li><li><a href="#project-18-point-in-time-correct-feature-engineering">Project 18 · Point-in-Time Correct Feature Engineering</a></li><li><a href="#project-19-mllib-churn-prediction-end-to-end">Project 19 · MLlib Churn Prediction End-to-End</a></li><li><a href="#project-20-capstone-real-time-recommendation-production-hardening">Project 20 · Capstone: Real-Time Recommendation &amp; Production Hardening</a></li></ol></li><li><a href="#what-you-will-be-able-to-say-after-project-20">What you will be able to say after Project 20</a></li></ol></li></ol>
+    </section>
+
+    <article class="content">
+      <h1 id="environment-setup">Environment Setup</h1>
+<p>The entire book runs on a single laptop. No Docker is required until Project 11 (Kafka) and Project 16 (Iceberg catalog), and even there a single-container setup is enough.</p>
+<h2 id="0-version-matrix-pin-these">0. Version matrix (pin these)</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Version</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Apache Spark</td>
+<td><strong>3.5.3</strong> (any 3.5.x ≥ 3.5.3)</td>
+<td><code>-bin-hadoop3</code> distribution</td>
+</tr>
+<tr>
+<td>Scala binary</td>
+<td><strong>2.12</strong></td>
+<td>Spark 3.5 default; all <code>_2.12</code> artifacts</td>
+</tr>
+<tr>
+<td>Java</td>
+<td><strong>17</strong> (Temurin/Adoptium 17.0.x)</td>
+<td>Spark 3.5 supports 8/11/17. <strong>Do not use Java 21.</strong></td>
+</tr>
+<tr>
+<td>Python</td>
+<td><strong>3.10 or 3.11</strong></td>
+<td>PySpark 3.5 supports 3.8–3.11. Avoid 3.12.</td>
+</tr>
+<tr>
+<td>Maven</td>
+<td><strong>3.9.x</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Hadoop client</td>
+<td>bundled (3.3.4)</td>
+<td>Windows needs <code>winutils.exe</code> + <code>hadoop.dll</code></td>
+</tr>
+<tr>
+<td>Kafka</td>
+<td>3.6.x (Docker)</td>
+<td>Projects 11–15 only</td>
+</tr>
+<tr>
+<td>Docker Desktop</td>
+<td>4.x</td>
+<td>Projects 11–20 (Kafka, MinIO, Iceberg REST)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Why Java 17 and not 21?</strong> Spark 3.5's bytecode and dependency set (Netty 4.1.x, Arrow, older Kryo) are validated against JDK 8/11/17. JDK 21 support landed in Spark 4.0. Using 21 on 3.5 produces intermittent <code>InaccessibleObjectException</code> and Arrow <code>Unsafe</code> failures that are painful to diagnose. Stay on 17.</p>
+</blockquote>
+<h2 id="1-install-java-17">1. Install Java 17</h2>
+<p><strong>Windows (PowerShell, elevated):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">winget</span> <span class="n">install</span> <span class="p">-</span><span class="n">-id</span> <span class="n">EclipseAdoptium</span><span class="p">.</span><span class="n">Temurin</span><span class="p">.</span><span class="n">17</span><span class="p">.</span><span class="n">JDK</span> <span class="n">-e</span> <span class="p">-</span><span class="n">-accept-source-agreements</span> <span class="p">-</span><span class="n">-accept-package-agreements</span>
+</code></pre></div>
+
+<p><strong>Linux (Debian/Ubuntu):</strong></p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>temurin-17-jdk
+</code></pre></div>
+
+<p><strong>macOS:</strong></p>
+<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>--cask<span class="w"> </span>temurin@17
+</code></pre></div>
+
+<p>Verify and set <code>JAVA_HOME</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c"># Windows</span>
+<span class="n">java</span> <span class="n">-version</span>
+<span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">"JAVA_HOME"</span><span class="p">,</span> <span class="s2">"C:\Program Files\Eclipse Adoptium\jdk-17.0.11.9-hotspot"</span><span class="p">,</span> <span class="s2">"Machine"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># Linux / macOS</span>
+java<span class="w"> </span>-version
+<span class="nb">export</span><span class="w"> </span><span class="nv">JAVA_HOME</span><span class="o">=</span><span class="k">$(</span>dirname<span class="w"> </span><span class="k">$(</span>dirname<span class="w"> </span><span class="k">$(</span>readlink<span class="w"> </span>-f<span class="w"> </span><span class="k">$(</span>which<span class="w"> </span>java<span class="k">))))</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s1">'export JAVA_HOME='</span><span class="s2">"</span><span class="nv">$JAVA_HOME</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
+</code></pre></div>
+
+<p><code>java -version</code> must print <code>17.0.x</code>. If it prints 21 or 8, fix <code>JAVA_HOME</code> and reorder <code>PATH</code> <strong>before continuing</strong> — Maven and Spark both silently pick the wrong JDK otherwise.</p>
+<h2 id="2-install-apache-spark-353">2. Install Apache Spark 3.5.3</h2>
+<p><strong>Windows:</strong> download <code>spark-3.5.3-bin-hadoop3.tgz</code> from
+<code>https://archive.apache.org/dist/spark/spark-3.5.3/</code>
+and extract with 7-Zip to <code>C:\spark</code> (avoid spaces and OneDrive-synced folders).</p>
+<p><strong>Linux / macOS:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>/opt
+sudo<span class="w"> </span>curl<span class="w"> </span>-LO<span class="w"> </span>https://archive.apache.org/dist/spark/spark-3.5.3/spark-3.5.3-bin-hadoop3.tgz
+sudo<span class="w"> </span>tar<span class="w"> </span>-xzf<span class="w"> </span>spark-3.5.3-bin-hadoop3.tgz
+sudo<span class="w"> </span>ln<span class="w"> </span>-s<span class="w"> </span>/opt/spark-3.5.3-bin-hadoop3<span class="w"> </span>/opt/spark
+</code></pre></div>
+
+<p>Set environment variables:</p>
+<div class="highlight"><pre><span></span><code><span class="c"># Windows (persist to Machine scope)</span>
+<span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">"SPARK_HOME"</span><span class="p">,</span> <span class="s2">"C:\spark"</span><span class="p">,</span> <span class="s2">"Machine"</span><span class="p">)</span>
+<span class="nv">$env:Path</span> <span class="p">=</span> <span class="s2">"C:\spark\bin;"</span> <span class="p">+</span> <span class="nv">$env:Path</span>
+<span class="n">spark-submit</span> <span class="p">-</span><span class="n">-version</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># Linux / macOS</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SPARK_HOME</span><span class="o">=</span>/opt/spark
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$SPARK_HOME</span>/bin:<span class="nv">$PATH</span>
+spark-submit<span class="w"> </span>--version
+</code></pre></div>
+
+<p>Expected output includes:</p>
+<div class="highlight"><pre><span></span><code>Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 3.5.3
+</code></pre></div>
+
+<h2 id="3-windows-winutilsexe-and-hadoopdll-mandatory">3. Windows: <code>winutils.exe</code> and <code>hadoop.dll</code> (mandatory)</h2>
+<p>Spark on Windows delegates file permissions and NativeIO calls to Hadoop's Windows binaries. Without them, <strong>every write fails</strong> with:</p>
+<div class="highlight"><pre><span></span><code>java.lang.UnsatisfiedLinkError: org.apache.hadoop.io.nativeio.NativeIO$Windows.access0(...)
+</code></pre></div>
+
+<p>Install them:</p>
+<div class="highlight"><pre><span></span><code><span class="c"># Create the Hadoop home layout</span>
+<span class="nb">New-Item</span> <span class="n">-ItemType</span> <span class="n">Directory</span> <span class="n">-Force</span> <span class="n">-Path</span> <span class="s2">"C:\hadoop\bin"</span> <span class="p">|</span> <span class="nb">Out-Null</span>
+
+<span class="c"># Fetch winutils + hadoop.dll for Hadoop 3.3.x</span>
+<span class="nb">Invoke-WebRequest</span> <span class="n">-Uri</span> <span class="s2">"https://raw.githubusercontent.com/cdarlint/winutils/master/hadoop-3.3.6/bin/winutils.exe"</span> <span class="n">-OutFile</span> <span class="s2">"C:\hadoop\bin\winutils.exe"</span>
+<span class="nb">Invoke-WebRequest</span> <span class="n">-Uri</span> <span class="s2">"https://raw.githubusercontent.com/cdarlint/winutils/master/hadoop-3.3.6/bin/hadoop.dll"</span> <span class="n">-OutFile</span> <span class="s2">"C:\hadoop\bin\hadoop.dll"</span>
+
+<span class="c"># hadoop.dll must also be visible to the JVM</span>
+<span class="nb">Copy-Item</span> <span class="s2">"C:\hadoop\bin\hadoop.dll"</span> <span class="s2">"C:\Windows\System32\hadoop.dll"</span> <span class="n">-Force</span>
+
+<span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">"HADOOP_HOME"</span><span class="p">,</span> <span class="s2">"C:\hadoop"</span><span class="p">,</span> <span class="s2">"Machine"</span><span class="p">)</span>
+<span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">"Path"</span><span class="p">,</span> <span class="nv">$env:Path</span> <span class="p">+</span> <span class="s2">";C:\hadoop\bin"</span><span class="p">,</span> <span class="s2">"Machine"</span><span class="p">)</span>
+
+<span class="c"># Sanity check: must list C:\ without an error</span>
+<span class="p">&amp;</span> <span class="s2">"C:\hadoop\bin\winutils.exe"</span> <span class="nb">ls </span><span class="n">C</span><span class="p">:\</span>
+</code></pre></div>
+
+<p>If you run jobs as a non-admin user and hit <code>Permission denied</code> on <code>C:\tmp\hive</code>, run once:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&amp;</span> <span class="s2">"C:\hadoop\bin\winutils.exe"</span> <span class="n">chmod</span> <span class="n">-R</span> <span class="n">777</span> <span class="n">C</span><span class="p">:\</span><span class="n">tmp</span><span class="p">\</span><span class="n">hive</span>
+</code></pre></div>
+
+<h2 id="4-python-environment">4. Python environment</h2>
+<div class="highlight"><pre><span></span><code><span class="n">py</span> <span class="p">-</span><span class="n">3</span><span class="p">.</span><span class="n">11</span> <span class="n">-m</span> <span class="n">venv</span> <span class="nv">$BOOK_HOME</span><span class="p">\.</span><span class="n">venv</span>
+<span class="nv">$BOOK_HOME</span><span class="p">\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">-</span><span class="n">-upgrade</span> <span class="n">pip</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="s2">"pyspark==3.5.3"</span> <span class="s2">"pyarrow==15.0.2"</span> <span class="s2">"pandas==2.2.2"</span> <span class="p">`</span>
+    <span class="s2">"faker==25.2.0"</span> <span class="s2">"pytest==8.2.2"</span> <span class="s2">"python-dateutil==2.9.0.post0"</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>python3.11<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span><span class="s2">"</span><span class="nv">$BOOK_HOME</span><span class="s2">/.venv"</span>
+<span class="nb">source</span><span class="w"> </span><span class="s2">"</span><span class="nv">$BOOK_HOME</span><span class="s2">/.venv/bin/activate"</span>
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"pyspark==3.5.3"</span><span class="w"> </span><span class="s2">"pyarrow==15.0.2"</span><span class="w"> </span><span class="s2">"pandas==2.2.2"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="s2">"faker==25.2.0"</span><span class="w"> </span><span class="s2">"pytest==8.2.2"</span><span class="w"> </span><span class="s2">"python-dateutil==2.9.0.post0"</span>
+</code></pre></div>
+
+<p><strong>The one rule that prevents 90% of setup pain:</strong> the pip <code>pyspark</code> version and <code>$SPARK_HOME</code> version must be <strong>identical</strong>. We install the pip package so <code>import pyspark</code> resolves inside the venv, and use the tarball's <code>spark-submit</code> as the entry point. Both are 3.5.3, so they agree.</p>
+<p>Pin the interpreter for the JVM workers:</p>
+<div class="highlight"><pre><span></span><code><span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">"PYSPARK_PYTHON"</span><span class="p">,</span> <span class="s2">"$BOOK_HOME\.venv\Scripts\python.exe"</span><span class="p">,</span> <span class="s2">"User"</span><span class="p">)</span>
+<span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">"PYSPARK_DRIVER_PYTHON"</span><span class="p">,</span> <span class="s2">"$BOOK_HOME\.venv\Scripts\python.exe"</span><span class="p">,</span> <span class="s2">"User"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">PYSPARK_PYTHON</span><span class="o">=</span><span class="s2">"</span><span class="nv">$BOOK_HOME</span><span class="s2">/.venv/bin/python"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PYSPARK_DRIVER_PYTHON</span><span class="o">=</span><span class="s2">"</span><span class="nv">$BOOK_HOME</span><span class="s2">/.venv/bin/python"</span>
+</code></pre></div>
+
+<h2 id="5-configure-spark-defaults-java-17-add-opens">5. Configure Spark defaults (Java 17 <code>--add-opens</code>)</h2>
+<p>Spark 3.5 performs deep reflection into <code>java.base</code>, <code>sun.nio.ch</code>, and <code>sun.security.action</code> (Netty direct buffers, Kryo, Arrow, Hadoop <code>UserGroupInformation</code>). Java 17's module system blocks this unless you open the packages explicitly.</p>
+<p>Create <code>%SPARK_HOME%\conf\spark-defaults.conf</code> (<code>$SPARK_HOME/conf/spark-defaults.conf</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ---- cluster / driver -------------------------------------------------------</span>
+<span class="na">spark.master</span><span class="w">                          </span><span class="s">local[*]</span>
+<span class="na">spark.driver.memory</span><span class="w">                   </span><span class="s">4g</span>
+<span class="na">spark.driver.maxResultSize</span><span class="w">            </span><span class="s">2g</span>
+<span class="na">spark.ui.port</span><span class="w">                         </span><span class="s">4040</span>
+<span class="na">spark.sql.warehouse.dir</span><span class="w">               </span><span class="s">file:///C:/spark-warehouse</span>
+
+<span class="c1"># ---- sane local defaults ----------------------------------------------------</span>
+<span class="na">spark.sql.shuffle.partitions</span><span class="w">          </span><span class="s">8</span>
+<span class="na">spark.sql.adaptive.enabled</span><span class="w">            </span><span class="s">true</span>
+<span class="na">spark.sql.adaptive.coalescePartitions.enabled</span><span class="w">   </span><span class="s">true</span>
+<span class="na">spark.sql.adaptive.skewJoin.enabled</span><span class="w">   </span><span class="s">true</span>
+<span class="na">spark.serializer</span><span class="w">                      </span><span class="s">org.apache.spark.serializer.KryoSerializer</span>
+<span class="na">spark.sql.parquet.compression.codec</span><span class="w">   </span><span class="s">snappy</span>
+
+<span class="c1"># ---- Java 17 module access (REQUIRED) --------------------------------------</span>
+<span class="na">spark.driver.extraJavaOptions</span><span class="w">         </span><span class="s">-XX:+IgnoreUnrecognizedVMOptions --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.nio.cs=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED -Djdk.reflect.useDirectMethodHandle=false</span>
+
+<span class="na">spark.executor.extraJavaOptions</span><span class="w">       </span><span class="s">-XX:+IgnoreUnrecognizedVMOptions --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.nio.cs=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED -Djdk.reflect.useDirectMethodHandle=false</span>
+</code></pre></div>
+
+<p>In <code>local[*]</code> mode the driver <em>is</em> the executor JVM, so both properties must be set — a very common cause of "works on the cluster, fails on the laptop."</p>
+<p>For the rare case where <code>spark-defaults.conf</code> is being ignored (for example, PySpark launched from an unrelated venv), export the options directly:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">$env:SPARK_SUBMIT_OPTS</span> <span class="p">=</span> <span class="s2">"--add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">SPARK_SUBMIT_OPTS</span><span class="o">=</span><span class="s2">"--add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"</span>
+</code></pre></div>
+
+<h2 id="6-maven">6. Maven</h2>
+<div class="highlight"><pre><span></span><code><span class="n">winget</span> <span class="n">install</span> <span class="p">-</span><span class="n">-id</span> <span class="n">Apache</span><span class="p">.</span><span class="n">Maven</span> <span class="n">-e</span> <span class="p">-</span><span class="n">-accept-source-agreements</span> <span class="p">-</span><span class="n">-accept-package-agreements</span>
+<span class="n">mvn</span> <span class="n">-version</span>    <span class="c"># must report Java version: 17.x and Maven 3.9.x</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>maven<span class="w">                </span><span class="c1"># macOS</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>maven<span class="w">     </span><span class="c1"># Debian/Ubuntu</span>
+mvn<span class="w"> </span>-version
+</code></pre></div>
+
+<p>Pre-warm the local repository once (saves ~2 minutes on the first chapter build):</p>
+<div class="highlight"><pre><span></span><code>mvn<span class="w"> </span>-q<span class="w"> </span>dependency:get<span class="w"> </span>-Dartifact<span class="o">=</span>org.apache.spark:spark-sql_2.12:3.5.3
+</code></pre></div>
+
+<blockquote>
+<p><strong>Golden rule for Java Spark projects:</strong> Spark dependencies are declared with <code>&lt;scope&gt;provided&lt;/scope&gt;</code>. The cluster (or <code>spark-submit</code>) supplies Spark at runtime. If you bundle Spark into your fat jar, you get <code>NoSuchMethodError</code> and <code>AbstractMethodError</code> at runtime — always, not sometimes.</p>
+</blockquote>
+<h2 id="7-docker-needed-from-part-iii-onward">7. Docker (needed from Part III onward)</h2>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>--version
+docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>hello-world
+</code></pre></div>
+
+<p>Chapters supply their own compose files. Nothing needs to be running yet.</p>
+<h2 id="8-smoke-test-python">8. Smoke test — Python</h2>
+<p>Save as <code>$BOOK_HOME/setup_check.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="sd">"""Environment smoke test: validates Spark, Java 17 and Arrow wiring."""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerType</span><span class="p">,</span> <span class="n">StringType</span><span class="p">,</span> <span class="n">StructField</span><span class="p">,</span> <span class="n">StructType</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">"</span><span class="si">%(asctime)s</span><span class="s2"> | </span><span class="si">%(levelname)-7s</span><span class="s2"> | </span><span class="si">%(name)s</span><span class="s2"> | </span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"setup_check"</span><span class="p">)</span>
+
+<span class="n">SCHEMA</span> <span class="o">=</span> <span class="n">StructType</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">StructField</span><span class="p">(</span><span class="s2">"employee"</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="n">StructField</span><span class="p">(</span><span class="s2">"department"</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="n">StructField</span><span class="p">(</span><span class="s2">"salary"</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="kc">False</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">ROWS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"ada"</span><span class="p">,</span> <span class="s2">"engineering"</span><span class="p">,</span> <span class="mi">145_000</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"grace"</span><span class="p">,</span> <span class="s2">"engineering"</span><span class="p">,</span> <span class="mi">152_000</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"linus"</span><span class="p">,</span> <span class="s2">"platform"</span><span class="p">,</span> <span class="mi">138_000</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"margaret"</span><span class="p">,</span> <span class="s2">"platform"</span><span class="p">,</span> <span class="mi">161_000</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"alan"</span><span class="p">,</span> <span class="s2">"research"</span><span class="p">,</span> <span class="mi">129_000</span><span class="p">),</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">spark</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">appName</span><span class="p">(</span><span class="s2">"setup-check"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">master</span><span class="p">(</span><span class="s2">"local[*]"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="s2">"spark.sql.shuffle.partitions"</span><span class="p">,</span> <span class="s2">"4"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="s2">"spark.ui.enabled"</span><span class="p">,</span> <span class="s2">"false"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">spark</span><span class="o">.</span><span class="n">sparkContext</span><span class="o">.</span><span class="n">setLogLevel</span><span class="p">(</span><span class="s2">"WARN"</span><span class="p">)</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Spark version  : </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">spark</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Java version   : </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">spark</span><span class="o">.</span><span class="n">sparkContext</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">System</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s2">"java.version"</span><span class="p">))</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Default parallelism: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">spark</span><span class="o">.</span><span class="n">sparkContext</span><span class="o">.</span><span class="n">defaultParallelism</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">ROWS</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">SCHEMA</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="s2">"department"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+            <span class="n">F</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">"headcount"</span><span class="p">),</span>
+            <span class="n">F</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">avg</span><span class="p">(</span><span class="s2">"salary"</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">"avg_salary"</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">desc</span><span class="p">(</span><span class="s2">"avg_salary"</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">truncate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">"expected three departments"</span>
+    <span class="k">assert</span> <span class="n">spark</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"3.5."</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"unexpected Spark version: </span><span class="si">{</span><span class="n">spark</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="n">spark</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"SMOKE TEST PASSED"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+
+<p>Run it:</p>
+<div class="highlight"><pre><span></span><code>spark-submit<span class="w"> </span>--master<span class="w"> </span><span class="s2">"local[*]"</span><span class="w"> </span>setup_check.py
+</code></pre></div>
+
+<p>You must see <code>SMOKE TEST PASSED</code> and <strong>no</strong> <code>WARN NativeCodeLoader</code> beyond the harmless "Unable to load native-hadoop library" line (expected on Windows unless Hadoop native libraries are on <code>PATH</code>).</p>
+<h2 id="9-smoke-test-java">9. Smoke test — Java</h2>
+<p><code>$BOOK_HOME/setup-java/pom.xml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;project</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://maven.apache.org/POM/4.0.0"</span>
+<span class="w">         </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">         </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>com.sparkmastery<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>setup-java<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>1.0.0<span class="nt">&lt;/version&gt;</span>
+<span class="w">  </span><span class="nt">&lt;packaging&gt;</span>jar<span class="nt">&lt;/packaging&gt;</span>
+<span class="w">  </span><span class="nt">&lt;name&gt;</span>setup-java<span class="nt">&lt;/name&gt;</span>
+
+<span class="w">  </span><span class="nt">&lt;properties&gt;</span>
+<span class="w">    </span><span class="nt">&lt;project.build.sourceEncoding&gt;</span>UTF-8<span class="nt">&lt;/project.build.sourceEncoding&gt;</span>
+<span class="w">    </span><span class="nt">&lt;maven.compiler.release&gt;</span>17<span class="nt">&lt;/maven.compiler.release&gt;</span>
+<span class="w">    </span><span class="nt">&lt;spark.version&gt;</span>3.5.3<span class="nt">&lt;/spark.version&gt;</span>
+<span class="w">    </span><span class="nt">&lt;scala.binary.version&gt;</span>2.12<span class="nt">&lt;/scala.binary.version&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/properties&gt;</span>
+
+<span class="w">  </span><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">      </span><span class="nt">&lt;groupId&gt;</span>org.apache.spark<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">      </span><span class="nt">&lt;artifactId&gt;</span>spark-sql_${scala.binary.version}<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">      </span><span class="nt">&lt;version&gt;</span>${spark.version}<span class="nt">&lt;/version&gt;</span>
+<span class="w">      </span><span class="nt">&lt;scope&gt;</span>provided<span class="nt">&lt;/scope&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/dependencies&gt;</span>
+
+<span class="w">  </span><span class="nt">&lt;build&gt;</span>
+<span class="w">    </span><span class="nt">&lt;finalName&gt;</span>${project.artifactId}-${project.version}<span class="nt">&lt;/finalName&gt;</span>
+<span class="w">    </span><span class="nt">&lt;plugins&gt;</span>
+<span class="w">      </span><span class="nt">&lt;plugin&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>org.apache.maven.plugins<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>maven-compiler-plugin<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;version&gt;</span>3.13.0<span class="nt">&lt;/version&gt;</span>
+<span class="w">        </span><span class="nt">&lt;configuration&gt;</span>
+<span class="w">          </span><span class="nt">&lt;release&gt;</span>17<span class="nt">&lt;/release&gt;</span>
+<span class="w">          </span><span class="nt">&lt;compilerArgs&gt;</span>
+<span class="w">            </span><span class="nt">&lt;arg&gt;</span>-parameters<span class="nt">&lt;/arg&gt;</span>
+<span class="w">          </span><span class="nt">&lt;/compilerArgs&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/configuration&gt;</span>
+<span class="w">      </span><span class="nt">&lt;/plugin&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/plugins&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/build&gt;</span>
+<span class="nt">&lt;/project&gt;</span>
+</code></pre></div>
+
+<p><code>$BOOK_HOME/setup-java/src/main/java/com/sparkmastery/setup/HelloSpark.java</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.sparkmastery.setup</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.spark.sql.Dataset</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.spark.sql.Row</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.spark.sql.RowFactory</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.spark.sql.SparkSession</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.spark.sql.types.DataTypes</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.spark.sql.types.StructField</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.spark.sql.types.StructType</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.slf4j.Logger</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.slf4j.LoggerFactory</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.List</span><span class="p">;</span>
+
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.apache.spark.sql.functions.avg</span><span class="p">;</span>
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.apache.spark.sql.functions.count</span><span class="p">;</span>
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.apache.spark.sql.functions.desc</span><span class="p">;</span>
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.apache.spark.sql.functions.round</span><span class="p">;</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * Minimal end-to-end validation of the Java 17 + Spark 3.5 toolchain.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">HelloSpark</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">Logger</span><span class="w"> </span><span class="n">LOG</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LoggerFactory</span><span class="p">.</span><span class="na">getLogger</span><span class="p">(</span><span class="n">HelloSpark</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">StructType</span><span class="w"> </span><span class="n">SCHEMA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">createStructType</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">StructField</span><span class="o">[]</span><span class="p">{</span>
+<span class="w">            </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">createStructField</span><span class="p">(</span><span class="s">"employee"</span><span class="p">,</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">StringType</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">),</span>
+<span class="w">            </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">createStructField</span><span class="p">(</span><span class="s">"department"</span><span class="p">,</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">StringType</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">),</span>
+<span class="w">            </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">createStructField</span><span class="p">(</span><span class="s">"salary"</span><span class="p">,</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">IntegerType</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="nf">HelloSpark</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// utility class</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">final</span><span class="w"> </span><span class="n">SparkSession</span><span class="w"> </span><span class="n">spark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SparkSession</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">appName</span><span class="p">(</span><span class="s">"hello-spark"</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">master</span><span class="p">(</span><span class="s">"local[*]"</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">config</span><span class="p">(</span><span class="s">"spark.sql.shuffle.partitions"</span><span class="p">,</span><span class="w"> </span><span class="s">"4"</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">config</span><span class="p">(</span><span class="s">"spark.ui.enabled"</span><span class="p">,</span><span class="w"> </span><span class="s">"false"</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">getOrCreate</span><span class="p">();</span>
+
+<span class="w">        </span><span class="n">spark</span><span class="p">.</span><span class="na">sparkContext</span><span class="p">().</span><span class="na">setLogLevel</span><span class="p">(</span><span class="s">"WARN"</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">LOG</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"Spark version: {}"</span><span class="p">,</span><span class="w"> </span><span class="n">spark</span><span class="p">.</span><span class="na">version</span><span class="p">());</span>
+<span class="w">            </span><span class="n">LOG</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"Java version : {}"</span><span class="p">,</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">"java.version"</span><span class="p">));</span>
+<span class="w">            </span><span class="n">LOG</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"Cores        : {}"</span><span class="p">,</span><span class="w"> </span><span class="n">spark</span><span class="p">.</span><span class="na">sparkContext</span><span class="p">().</span><span class="na">defaultParallelism</span><span class="p">());</span>
+
+<span class="w">            </span><span class="kd">final</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">Row</span><span class="o">&gt;</span><span class="w"> </span><span class="n">rows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">List</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">                    </span><span class="n">RowFactory</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"ada"</span><span class="p">,</span><span class="w"> </span><span class="s">"engineering"</span><span class="p">,</span><span class="w"> </span><span class="mi">145_000</span><span class="p">),</span>
+<span class="w">                    </span><span class="n">RowFactory</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"grace"</span><span class="p">,</span><span class="w"> </span><span class="s">"engineering"</span><span class="p">,</span><span class="w"> </span><span class="mi">152_000</span><span class="p">),</span>
+<span class="w">                    </span><span class="n">RowFactory</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"linus"</span><span class="p">,</span><span class="w"> </span><span class="s">"platform"</span><span class="p">,</span><span class="w"> </span><span class="mi">138_000</span><span class="p">),</span>
+<span class="w">                    </span><span class="n">RowFactory</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"margaret"</span><span class="p">,</span><span class="w"> </span><span class="s">"platform"</span><span class="p">,</span><span class="w"> </span><span class="mi">161_000</span><span class="p">),</span>
+<span class="w">                    </span><span class="n">RowFactory</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"alan"</span><span class="p">,</span><span class="w"> </span><span class="s">"research"</span><span class="p">,</span><span class="w"> </span><span class="mi">129_000</span><span class="p">)</span>
+<span class="w">            </span><span class="p">);</span>
+
+<span class="w">            </span><span class="kd">final</span><span class="w"> </span><span class="n">Dataset</span><span class="o">&lt;</span><span class="n">Row</span><span class="o">&gt;</span><span class="w"> </span><span class="n">df</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">spark</span><span class="p">.</span><span class="na">createDataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span><span class="w"> </span><span class="n">SCHEMA</span><span class="p">);</span>
+
+<span class="w">            </span><span class="kd">final</span><span class="w"> </span><span class="n">Dataset</span><span class="o">&lt;</span><span class="n">Row</span><span class="o">&gt;</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">df</span><span class="p">.</span><span class="na">groupBy</span><span class="p">(</span><span class="s">"department"</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">agg</span><span class="p">(</span>
+<span class="w">                            </span><span class="n">count</span><span class="p">(</span><span class="s">"*"</span><span class="p">).</span><span class="na">as</span><span class="p">(</span><span class="s">"headcount"</span><span class="p">),</span>
+<span class="w">                            </span><span class="n">round</span><span class="p">(</span><span class="n">avg</span><span class="p">(</span><span class="s">"salary"</span><span class="p">),</span><span class="w"> </span><span class="mi">2</span><span class="p">).</span><span class="na">as</span><span class="p">(</span><span class="s">"avg_salary"</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">orderBy</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="s">"avg_salary"</span><span class="p">));</span>
+
+<span class="w">            </span><span class="n">result</span><span class="p">.</span><span class="na">show</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">count</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">3L</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">IllegalStateException</span><span class="p">(</span><span class="s">"expected exactly 3 departments"</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">spark</span><span class="p">.</span><span class="na">version</span><span class="p">().</span><span class="na">startsWith</span><span class="p">(</span><span class="s">"3.5."</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">IllegalStateException</span><span class="p">(</span><span class="s">"unexpected Spark version: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">spark</span><span class="p">.</span><span class="na">version</span><span class="p">());</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="n">LOG</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"SMOKE TEST PASSED: max avg salary = {}"</span><span class="p">,</span>
+<span class="w">                    </span><span class="n">result</span><span class="p">.</span><span class="na">first</span><span class="p">().</span><span class="na">getAs</span><span class="p">(</span><span class="s">"avg_salary"</span><span class="p">,</span><span class="w"> </span><span class="n">Double</span><span class="p">.</span><span class="na">class</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">spark</span><span class="p">.</span><span class="na">stop</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Build and run:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>setup-java
+mvn<span class="w"> </span>-q<span class="w"> </span>clean<span class="w"> </span>package
+spark-submit<span class="w"> </span>--class<span class="w"> </span>com.sparkmastery.setup.HelloSpark<span class="w"> </span>--master<span class="w"> </span><span class="s2">"local[*]"</span><span class="w"> </span>target/setup-java-1.0.0.jar
+</code></pre></div>
+
+<p>You must see <code>SMOKE TEST PASSED</code>. If both smoke tests pass, every chapter in this book will run unmodified.</p>
+<h2 id="10-troubleshooting-matrix">10. Troubleshooting matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Root cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>InaccessibleObjectException: Unable to make field ... accessible: module java.base does not "opens java.lang"</code></td>
+<td>Missing <code>--add-opens</code></td>
+<td>Apply §5; verify <code>spark.driver.extraJavaOptions</code> <strong>and</strong> <code>spark.executor.extraJavaOptions</code></td>
+</tr>
+<tr>
+<td><code>java.lang.UnsatisfiedLinkError: ...NativeIO$Windows.access0</code></td>
+<td>No <code>winutils.exe</code></td>
+<td>Apply §3; confirm <code>HADOOP_HOME</code> and <code>hadoop.dll</code> in <code>System32</code></td>
+</tr>
+<tr>
+<td><code>Python in worker has different version (3.1x) than that in driver</code></td>
+<td>Venv not pinned</td>
+<td>Set <code>PYSPARK_PYTHON</code> / <code>PYSPARK_DRIVER_PYTHON</code></td>
+</tr>
+<tr>
+<td><code>NoSuchMethodError</code> / <code>AbstractMethodError</code> in Java jobs</td>
+<td>Spark jars bundled in the fat jar</td>
+<td>Ensure <code>&lt;scope&gt;provided&lt;/scope&gt;</code></td>
+</tr>
+<tr>
+<td><code>ClassNotFoundException: org.apache.spark.sql.SparkSession</code> at runtime</td>
+<td>Missing <code>provided</code> deps on classpath</td>
+<td>Run via <code>spark-submit</code>, not <code>java -jar</code></td>
+</tr>
+<tr>
+<td><code>InvalidClassException</code> / Kryo errors</td>
+<td>Serializer mismatch across versions</td>
+<td>Keep Spark and pip versions identical; clear <code>~/.ivy2/cache</code></td>
+</tr>
+<tr>
+<td><code>WARN NativeCodeLoader: Unable to load native-hadoop library</code></td>
+<td>Native libs absent</td>
+<td>Harmless. Ignore unless using LZO or similar codecs</td>
+</tr>
+<tr>
+<td><code>org.apache.hadoop.ipc.RemoteException: ... Permission denied</code> on Windows</td>
+<td>Hive/warehouse permissions</td>
+<td><code>winutils chmod -R 777 C:\tmp\hive</code></td>
+</tr>
+<tr>
+<td>Maven build takes minutes on first run</td>
+<td>Cold local repository</td>
+<td>Pre-warm per §6</td>
+</tr>
+<tr>
+<td><code>AnalysisException: Unable to infer schema</code></td>
+<td>Empty input directory</td>
+<td>Regenerate data; every generator writes ≥ 1 partition</td>
+</tr>
+</tbody>
+</table>
+<h2 id="11-cluster-submit-delta">11. Cluster submit delta</h2>
+<p>Everything in this book runs in <code>local[*]</code>. To move a job to a real cluster, the <em>only</em> mandatory changes are:</p>
+<div class="highlight"><pre><span></span><code>spark-submit<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--master<span class="w"> </span>yarn<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--deploy-mode<span class="w"> </span>cluster<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num-executors<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--executor-cores<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--executor-memory<span class="w"> </span>8g<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--driver-memory<span class="w"> </span>4g<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span>spark.sql.shuffle.partitions<span class="o">=</span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span>spark.sql.adaptive.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>retail_etl.py<span class="w"> </span>--input<span class="w"> </span>hdfs:///data/orders<span class="w"> </span>--output<span class="w"> </span>hdfs:///data/silver/orders
+</code></pre></div>
+
+<p>Two rules that keep the migration boring:</p>
+<ol>
+<li><strong>Replace every <code>file:///</code> path</strong> with an HDFS/S3 URI. Local <code>file://</code> paths resolve to the <em>driver's</em> disk in cluster mode and will silently produce empty reads.</li>
+<li><strong>Scale <code>spark.sql.shuffle.partitions</code> to <code>≈ 2 × total_cores</code></strong>, not to the local default of 8. AQE will coalesce downward, but it cannot split a single 20 GB partition.</li>
+</ol>
+<div class="chapter-break"></div>
+
+<h1 id="the-20-project-master-syllabus">The 20-Project Master Syllabus</h1>
+<p>Four parts. Each part builds a distinct production capability, and each chapter is a complete vertical slice: generator → PySpark → Java → tuning.</p>
+<h2 id="summary-map">Summary map</h2>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Projects</th>
+<th>Domain capability</th>
+<th>Difficulty</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>I — Foundations &amp; Batch ETL</strong></td>
+<td>1–5</td>
+<td>Deterministic, idempotent batch pipelines; window functions; dimensional modeling</td>
+<td>★★☆☆☆</td>
+</tr>
+<tr>
+<td><strong>II — Optimization, Joins &amp; Data Quality</strong></td>
+<td>6–10</td>
+<td>Shuffle economics, skew, file layout, semi-structured ingestion, data contracts</td>
+<td>★★★☆☆</td>
+</tr>
+<tr>
+<td><strong>III — Streaming &amp; Real-Time</strong></td>
+<td>11–15</td>
+<td>Exactly-once streaming, watermarks, arbitrary state, stream joins, sink idempotency</td>
+<td>★★★★☆</td>
+</tr>
+<tr>
+<td><strong>IV — Lakehouse &amp; ML at Scale</strong></td>
+<td>16–20</td>
+<td>Iceberg/Delta ACID tables, point-in-time features, MLlib pipelines, production hardening</td>
+<td>★★★★★</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Project dependency graph.</strong> Projects 1–10 are sequential: each introduces a helper that later chapters import (<code>lib/spark_session.py</code> in 1, <code>lib/quality.py</code> in 10). Projects 11–20 are independent of each other but assume Part I's data generators and Part II's performance harness.</p>
+<hr>
+<h2 id="part-i-foundations-batch-etl">Part I — Foundations &amp; Batch ETL</h2>
+<h3 id="project-1-retail-order-etl-csv-parquet-medallion-pipeline">Project 1 · Retail Order ETL: CSV → Parquet Medallion Pipeline</h3>
+<p><strong>Business scenario.</strong> A mid-market retailer receives nightly order extracts from four store systems. Files are late, duplicated, malformed, and inconsistently cased. Finance needs a trustworthy, partitioned Parquet table by 06:00 local time.</p>
+<p><strong>Spark mechanics.</strong> Explicit <code>StructType</code> schemas vs inference; <code>permissive</code> mode and <code>_corrupt_record</code>; deduplication with <code>row_number()</code> over a business key plus ingestion timestamp; <code>partitionBy</code> and the small-file consequences; AQE partition coalescing; reading <code>explain(True)</code>.</p>
+<p><strong>You will ship.</strong> <code>generate_data.py</code> (Faker-based, 250k orders including seeded defects), <code>retail_etl.py</code> with bronze/silver/gold stages and a rejection table, and a Java <code>RetailEtlJob</code> producing byte-identical partitioned output.</p>
+<p><strong>Difficulty</strong> ★★☆☆☆ · <strong>Runtime</strong> ~90 s</p>
+<h3 id="project-2-customer-360-identity-resolution-deduplication-at-scale">Project 2 · Customer 360: Identity Resolution &amp; Deduplication at Scale</h3>
+<p><strong>Business scenario.</strong> The same human exists as <code>J. Smith</code>, <code>John Smith</code>, and <code>JONATHAN SMITH</code> across CRM, web, and POS with different emails and phone formats. Marketing needs one golden record per person without merging distinct people.</p>
+<p><strong>Spark mechanics.</strong> Blocking keys to avoid O(n²) self-joins; <code>broadcast()</code> semantics and the 8 GB broadcast limit; <code>levenshtein</code>, <code>soundex</code>, normalization via <code>regexp_replace</code>; determinism and <code>monotonically_increasing_id</code> pitfalls; surviving-record selection with <code>row_number()</code>; graph-free union-find approximation via two-pass connected components.</p>
+<p><strong>You will ship.</strong> A generator with deliberately injected duplicates and near-misses, a scored match pipeline with thresholds, a golden-record builder, plus the Java equivalent using <code>Dataset&lt;Row&gt;</code> joins and <code>Column</code> predicates.</p>
+<p><strong>Difficulty</strong> ★★★☆☆ · <strong>Runtime</strong> ~2 min</p>
+<h3 id="project-3-clickstream-sessionization-conversion-funnel">Project 3 · Clickstream Sessionization &amp; Conversion Funnel</h3>
+<p><strong>Business scenario.</strong> An e-commerce site emits raw click events. Analytics wants 30-minute-inactivity sessions and a five-step funnel (land → product → cart → checkout → purchase) with drop-off attribution per channel.</p>
+<p><strong>Spark mechanics.</strong> Event time vs processing time; gaps-and-islands via <code>lag</code> plus a cumulative <code>sum</code> over <code>Window.partitionBy(user).orderBy(ts)</code>; window frame boundaries (<code>rowsBetween</code> vs <code>rangeBetween</code>); funnel construction with <code>max(when(...))</code> pivots; <code>first</code>/<code>last</code> with <code>ignorenulls</code>.</p>
+<p><strong>You will ship.</strong> A generator producing ~1M events with realistic bot traffic and channel attribution, a sessionizer with funnel metrics, and the Java job using <code>WindowSpec</code> and <code>functions.when</code>.</p>
+<p><strong>Difficulty</strong> ★★★☆☆ · <strong>Runtime</strong> ~2 min</p>
+<h3 id="project-4-scd-type-2-dimension-loader-idempotent-upsert-on-parquet">Project 4 · SCD Type 2 Dimension Loader (Idempotent Upsert on Parquet)</h3>
+<p><strong>Business scenario.</strong> The product dimension must retain full history — price and category changes need <code>valid_from</code> / <code>valid_to</code> / <code>is_current</code>. The job reruns daily, sometimes twice, and must never create duplicate versions.</p>
+<p><strong>Spark mechanics.</strong> Change detection with a <code>full outer join</code> plus a <code>hash</code> of tracked columns; closing open versions; <code>unionByName</code> for inserts; <strong>idempotency without MERGE</strong> using a deterministic <code>version_id</code> and <code>dropDuplicates</code>; partition overwrite semantics (<code>spark.sql.sources.partitionOverwriteMode=dynamic</code>); why this is exactly the problem Delta/Iceberg <code>MERGE</code> solves — foreshadowing Project 16.</p>
+<p><strong>You will ship.</strong> A generator with three daily snapshots containing inserts, updates, and no-ops; the loader; a verification script that replays a snapshot and asserts row-count invariance.</p>
+<p><strong>Difficulty</strong> ★★★☆☆ · <strong>Runtime</strong> ~60 s</p>
+<h3 id="project-5-log-mining-anomaly-detection-with-skew-handling">Project 5 · Log Mining &amp; Anomaly Detection with Skew Handling</h3>
+<p><strong>Business scenario.</strong> 40 GB/day of nginx-style logs from 12 services. SRE needs per-service error-rate anomalies and top-N failing endpoints — but one service emits 60% of all rows and destroys the shuffle.</p>
+<p><strong>Spark mechanics.</strong> <code>regexp_extract</code> over native functions vs Python UDF vs pandas UDF (measured, not asserted); hot-key salting (<code>concat(key, '_', floor(rand() * N))</code>) with two-phase aggregation; <code>approx_count_distinct</code> (HyperLogLog) vs <code>countDistinct</code>; anomaly flagging with <code>stddev_pop</code> z-scores; <code>spark.sql.adaptive.skewJoin</code> limits.</p>
+<p><strong>You will ship.</strong> A log generator with an intentionally skewed service, a native-function parser, a benchmark harness comparing three parsing strategies, and the salted aggregation.</p>
+<p><strong>Difficulty</strong> ★★★☆☆ · <strong>Runtime</strong> ~90 s</p>
+<hr>
+<h2 id="part-ii-optimization-joins-data-quality">Part II — Optimization, Joins &amp; Data Quality</h2>
+<h3 id="project-6-star-schema-join-optimization-laboratory">Project 6 · Star-Schema Join Optimization Laboratory</h3>
+<p><strong>Business scenario.</strong> A BI query joins a 500M-row fact table to five dimensions. Currently it spills to disk nightly. You must cut runtime by at least 60% without more hardware.</p>
+<p><strong>Spark mechanics.</strong> Broadcast hash join vs sort-merge join vs shuffled hash join — how the planner chooses, and how <code>/*+ BROADCAST(d) */</code> overrides it; <code>spark.sql.autoBroadcastJoinThreshold</code>; salting a skewed dimension key; AQE skew-join splitting; reading stage metrics; the real cost of <code>count()</code> on a cached plan.</p>
+<p><strong>You will ship.</strong> A synthetic star schema with a deliberately skewed dimension, five query variants, and a benchmarking harness that reports shuffle bytes read/written per strategy.</p>
+<p><strong>Difficulty</strong> ★★★★☆ · <strong>Runtime</strong> ~3 min</p>
+<h3 id="project-7-file-layout-engineering-partitioning-bucketing-compaction">Project 7 · File Layout Engineering: Partitioning, Bucketing &amp; Compaction</h3>
+<p><strong>Business scenario.</strong> A table written hourly has accumulated 1.2M files averaging 40 KB. Every query pays a metadata tax. You own the compaction service.</p>
+<p><strong>Spark mechanics.</strong> Target file size math (<code>spark.sql.files.maxPartitionBytes</code>, <code>openCostInBytes</code>); <code>repartition(n, col)</code> vs <code>coalesce(n)</code> vs <code>repartitionByRange</code>; <code>bucketBy</code> + <code>sortBy</code> and why bucket pruning only works with <code>saveAsTable</code>; hidden partitioning vs directory partitioning; a compaction job safe to run concurrently with readers; retention reasoning.</p>
+<p><strong>You will ship.</strong> A generator that manufactures a pathological small-file table, a compaction job with dry-run reporting, and a query benchmark before and after.</p>
+<p><strong>Difficulty</strong> ★★★★☆ · <strong>Runtime</strong> ~2 min</p>
+<h3 id="project-8-semi-structured-ingestion-nested-json-xml-schema-evolution">Project 8 · Semi-Structured Ingestion: Nested JSON, XML &amp; Schema Evolution</h3>
+<p><strong>Business scenario.</strong> Three upstream teams ship event payloads: deeply nested JSON, XML from a legacy ERP, and a JSON feed that gains fields without warning. The warehouse must ingest all three without breaking.</p>
+<p><strong>Spark mechanics.</strong> <code>from_json</code> with DDL schema strings vs <code>StructType</code>; <code>explode</code> vs <code>explode_outer</code> vs <code>posexplode</code>; schema evolution strategies (rescue column, <code>mergeSchema</code>, explicit contract versioning); XML via <code>spark-xml</code> with <code>rowTag</code> and attribute mapping; flattening arrays-of-structs into relational form; <code>to_json</code> / <code>get_json_object</code> performance profile.</p>
+<p><strong>You will ship.</strong> A multi-format generator, a flattening pipeline with a rescue column that captures unknown fields as <code>MapType</code>, and the Java job using <code>functions.from_json</code> with a <code>DataType</code> tree.</p>
+<p><strong>Difficulty</strong> ★★★★☆ · <strong>Runtime</strong> ~2 min</p>
+<h3 id="project-9-query-acceleration-lab-caching-plans-benchmarks">Project 9 · Query Acceleration Lab: Caching, Plans &amp; Benchmarks</h3>
+<p><strong>Business scenario.</strong> A dashboard issues the same seven aggregations against a 200M-row table. Each refresh takes 40 minutes; the business wants under five.</p>
+<p><strong>Spark mechanics.</strong> <code>persist</code> storage levels and their real memory/disk trade-offs; when caching <em>hurts</em> (wide rows, lost column pruning); <code>CACHE TABLE</code> vs <code>persist</code>; column pruning and predicate pushdown verified through <code>explain</code>; <code>spark.sql.inMemoryColumnarStorage.batchSize</code> and <code>compression</code>; join reordering with <code>spark.sql.cbo.enabled</code> and statistics via <code>ANALYZE TABLE</code>.</p>
+<p><strong>You will ship.</strong> A repeatable benchmark harness (warm-up, N iterations, median plus p95), a plan-comparison reporter, and a decision matrix for cache vs pre-aggregate vs materialize.</p>
+<p><strong>Difficulty</strong> ★★★★☆ · <strong>Runtime</strong> ~4 min</p>
+<h3 id="project-10-declarative-data-quality-framework-with-quarantine">Project 10 · Declarative Data Quality Framework with Quarantine</h3>
+<p><strong>Business scenario.</strong> Every pipeline re-implements its own null checks. Auditors want a single rule catalog, per-run metrics, and bad rows quarantined rather than dropped.</p>
+<p><strong>Spark mechanics.</strong> Rule specification as data (YAML/JSON) compiled to <code>Column</code> predicates; <code>when(...).otherwise(...)</code> to split good and bad in one pass instead of two scans; aggregate rule metrics with a single <code>agg</code> (<code>sum(when(...))</code>); quarantine writes with reason codes; fail-fast vs warn-and-continue policy; integrating checks into the job DAG so downstream stages never see dirty data.</p>
+<p><strong>You will ship.</strong> <code>lib/quality.py</code> (reused by later chapters), a rules YAML with 24 production-grade checks, a runner that emits a metrics table plus a quarantine dataset, and a Java port of the core predicate compiler.</p>
+<p><strong>Difficulty</strong> ★★★★☆ · <strong>Runtime</strong> ~90 s</p>
+<hr>
+<h2 id="part-iii-streaming-real-time">Part III — Streaming &amp; Real-Time</h2>
+<h3 id="project-11-kafka-structured-streaming-bronze-ingestion-exactly-once">Project 11 · Kafka → Structured Streaming Bronze Ingestion (Exactly-Once)</h3>
+<p><strong>Business scenario.</strong> A payments platform publishes ~20k events/s to Kafka. The lakehouse needs a bronze table that never loses or duplicates a record, survives restarts, and can be backfilled on demand.</p>
+<p><strong>Spark mechanics.</strong> Sources, sinks and the exactly-once contract; checkpoint anatomy (<code>offsets/</code>, <code>commits/</code>, <code>metadata</code>); <code>trigger(processingTime)</code> vs <code>availableNow</code> vs <code>once</code>; <code>maxOffsetsPerTrigger</code> and backpressure; <code>foreachBatch</code> for idempotent writes keyed by <code>batchId</code>; Kafka connector offset-commit semantics; schema enforcement at ingestion via a versioned contract.</p>
+<p><strong>You will ship.</strong> A docker-compose Kafka plus a Python producer replaying a generated event file, the streaming job writing partitioned Parquet with a <code>batch_id</code>, and a restart test that proves no duplication.</p>
+<p><strong>Difficulty</strong> ★★★★☆</p>
+<h3 id="project-12-watermarks-late-data-deduplication">Project 12 · Watermarks, Late Data &amp; Deduplication</h3>
+<p><strong>Business scenario.</strong> Mobile clients buffer events offline for up to 50 minutes. The five-minute revenue dashboard must be correct despite late arrivals and client-side retries.</p>
+<p><strong>Spark mechanics.</strong> Watermark definition and its three consequences (state eviction, late-data drop, output finalization); <code>withWatermark</code> on the event-time column vs a derived column; <code>dropDuplicates</code> with and without a watermark; <code>dropDuplicatesWithinWatermark</code> semantics in 3.5; append vs update vs complete output modes and where each is legal; inspecting state via <code>StreamingQueryProgress.stateOperators</code>.</p>
+<p><strong>You will ship.</strong> A producer emitting 0–55 minute late events, a windowed aggregation with a 10-minute watermark, a dedup stage keyed by <code>event_id</code>, and an assertion suite proving late-but-in-watermark data is counted exactly once.</p>
+<p><strong>Difficulty</strong> ★★★★☆</p>
+<h3 id="project-13-stateful-fraud-detection-with-applyinpandaswithstate">Project 13 · Stateful Fraud Detection with <code>applyInPandasWithState</code></h3>
+<p><strong>Business scenario.</strong> A card-not-present fraud model scores each user's transaction stream against their last 30 minutes of behaviour: velocity, amount deviation, distinct-merchant burst. Rules must not lose state across micro-batches.</p>
+<p><strong>Spark mechanics.</strong> Arbitrary stateful processing; the <code>GroupState</code> API (<code>exists</code>, <code>get</code>, <code>update</code>, <code>remove</code>, <code>setTimeoutDuration</code>); processing-time vs event-time timeouts; state schema design and unbounded-state risk; <code>flatMapGroupsWithState</code> (Java) vs <code>applyInPandasWithState</code> (Python) and Arrow serialization cost; output mode constraints; state-store growth and <code>spark.sql.streaming.stateStore.providerClass</code>.</p>
+<p><strong>You will ship.</strong> A transaction generator with injected fraud patterns, a stateful scorer emitting alerts, state-size instrumentation, and the Java <code>flatMapGroupsWithState</code> implementation with <code>Encoders</code>.</p>
+<p><strong>Difficulty</strong> ★★★★★</p>
+<h3 id="project-14-streaming-joins-enrichment-and-interval-correlation">Project 14 · Streaming Joins: Enrichment and Interval Correlation</h3>
+<p><strong>Business scenario.</strong> Orders stream in and need (a) enrichment from a slowly changing product catalog and (b) correlation with shipment events that may arrive before or after the order.</p>
+<p><strong>Spark mechanics.</strong> Stream-static joins and why the static side must be broadcastable (and refreshed); stream-stream <strong>interval joins</strong> with <code>eventTimeRangeStartExpression</code> / <code>End</code>; watermark requirements on both sides; deduplication <em>before</em> the join to prevent fan-out; join output-mode restrictions; state size = watermark bound × event rate, with the formula and how to size it.</p>
+<p><strong>You will ship.</strong> Two producers (orders, shipments) with controlled arrival skew, an enrichment join with catalog refresh, an interval join producing order-to-shipment latency, and a state-size budget worksheet.</p>
+<p><strong>Difficulty</strong> ★★★★★</p>
+<h3 id="project-15-real-time-sink-idempotency-streaming-observability">Project 15 · Real-Time Sink, Idempotency &amp; Streaming Observability</h3>
+<p><strong>Business scenario.</strong> Aggregated metrics must land in PostgreSQL for a live dashboard, be safe under retries, and page an on-call engineer when throughput collapses.</p>
+<p><strong>Spark mechanics.</strong> <code>foreachBatch</code> with JDBC upserts (<code>INSERT ... ON CONFLICT</code>); staging-table-then-swap for atomicity; <code>batchId</code>-keyed idempotency; partition-level parallelism (<code>numPartitions</code>, <code>repartition</code>); <code>StreamingQueryListener</code> (<code>onQueryStarted</code>, <code>onQueryProgress</code>, <code>onQueryTerminated</code>) for metrics; <code>lastProgress</code> parsing (input/output rows per second, <code>durationMs</code> breakdown); graceful shutdown and listener registration; checkpoint location per query vs per sink.</p>
+<p><strong>You will ship.</strong> A docker-compose Postgres, an idempotent upsert sink, a listener that emits JSON metrics and flags zero-progress windows, and a controlled-failure drill proving no partial batches.</p>
+<p><strong>Difficulty</strong> ★★★★☆</p>
+<hr>
+<h2 id="part-iv-lakehouse-machine-learning-at-scale">Part IV — Lakehouse &amp; Machine Learning at Scale</h2>
+<h3 id="project-16-apache-iceberg-lakehouse-merge-time-travel-maintenance">Project 16 · Apache Iceberg Lakehouse: MERGE, Time Travel &amp; Maintenance</h3>
+<p><strong>Business scenario.</strong> A lakehouse must support row-level upserts and deletes, ACID reads during writes, schema evolution, and point-in-time audit queries — on object storage.</p>
+<p><strong>Spark mechanics.</strong> Catalog configuration (Hadoop catalog vs REST vs Nessie) and warehouse layout; <code>MERGE INTO</code> with <code>WHEN MATCHED</code> / <code>NOT MATCHED BY SOURCE</code>; snapshot isolation and <code>VERSION AS OF</code> / <code>TIMESTAMP AS OF</code>; hidden partitioning (<code>days(ts)</code>, <code>bucket(16, id)</code>) and partition evolution; <code>rewrite_data_files</code> and <code>expire_snapshots</code>; manifest and file-count effects on planning time; equality vs positional deletes.</p>
+<p><strong>You will ship.</strong> MinIO plus Iceberg in docker-compose (or a pure-local Hadoop catalog), a full SCD2-via-MERGE implementation that replaces Project 4's hand-rolled version, a time-travel audit query, and a maintenance job with retention policy.</p>
+<p><strong>Difficulty</strong> ★★★★★</p>
+<h3 id="project-17-delta-lake-medallion-architecture-bronzesilvergold">Project 17 · Delta Lake Medallion Architecture (Bronze/Silver/Gold)</h3>
+<p><strong>Business scenario.</strong> You are consolidating 14 ad-hoc pipelines into a governed medallion architecture with schema enforcement, constraints, and change data feed for downstream consumers.</p>
+<p><strong>Spark mechanics.</strong> Delta transaction log anatomy; <code>MERGE</code> vs <code>INSERT</code> plus <code>replaceWhere</code>; <code>CHECK</code> constraints and <code>NOT NULL</code>; <code>mergeSchema</code> vs <code>overwriteSchema</code>; <code>OPTIMIZE</code> plus <code>ZORDER BY</code> (data-skipping effectiveness measured via <code>numFiles</code> / <code>numOutputBytes</code>); <code>VACUUM</code> retention and the reader-safety contract; Change Data Feed for incremental downstream jobs; <code>DESCRIBE HISTORY</code>.</p>
+<p><strong>You will ship.</strong> A three-layer pipeline over the retail dataset from Project 1, DDL with constraints, a Z-order benchmark, a CDF consumer, and a cost/retention policy document.</p>
+<p><strong>Difficulty</strong> ★★★★★</p>
+<h3 id="project-18-point-in-time-correct-feature-engineering">Project 18 · Point-in-Time Correct Feature Engineering</h3>
+<p><strong>Business scenario.</strong> A churn model trained on features that leaked future information scored 0.94 offline and 0.61 in production. You must rebuild the feature layer with strict as-of semantics.</p>
+<p><strong>Spark mechanics.</strong> Label and feature time boundaries; <code>Window.rangeBetween</code> on epoch seconds for trailing windows; as-of joins (<code>join</code> on <code>feature_ts &lt;= label_ts</code> then <code>row_number()</code> descending) vs interval joins; feature versioning and backfill; train/serve skew and how <code>Pipeline</code> plus saved transformers prevent it; feature freshness partitioning; cardinality control with <code>approx_count_distinct</code> and hashing.</p>
+<p><strong>You will ship.</strong> An event generator spanning 18 months, a feature builder producing 30 point-in-time-correct features, a leakage test that <em>fails</em> on a deliberately leaky variant, and a feature-store-style Parquet layout partitioned by <code>feature_date</code>.</p>
+<p><strong>Difficulty</strong> ★★★★★</p>
+<h3 id="project-19-mllib-churn-prediction-end-to-end">Project 19 · MLlib Churn Prediction End-to-End</h3>
+<p><strong>Business scenario.</strong> A subscription business needs a weekly churn probability per account, a threshold tuned to retention-budget economics, and explainable drivers for the CRM team.</p>
+<p><strong>Spark mechanics.</strong> <code>StringIndexer</code> / <code>OneHotEncoder</code> / <code>VectorAssembler</code> inside a <code>Pipeline</code>; <code>StandardScaler</code> and why fitting on the full dataset is leakage; <code>GBTClassifier</code> vs <code>LogisticRegression</code> vs <code>RandomForestClassifier</code>; <code>CrossValidator</code> plus <code>ParamGridBuilder</code> with <code>parallelism</code>; <code>BinaryClassificationEvaluator</code> (AUC) vs <code>MulticlassClassificationMetrics</code>; class imbalance via <code>weightCol</code>; model persistence (<code>save</code>/<code>load</code>) and schema compatibility; batch scoring with <code>model.transform</code> and feature-importance extraction.</p>
+<p><strong>You will ship.</strong> A training job, a saved pipeline model, a scoring job writing predictions to the lakehouse, an evaluation report with PR-curve points, and a Java inference job loading the same model.</p>
+<p><strong>Difficulty</strong> ★★★★★</p>
+<h3 id="project-20-capstone-real-time-recommendation-production-hardening">Project 20 · Capstone: Real-Time Recommendation &amp; Production Hardening</h3>
+<p><strong>Business scenario.</strong> Ship a streaming recommender: ALS trained nightly on implicit feedback, served in-stream with sub-second latency, with cold-start fallback, CI, and SLOs.</p>
+<p><strong>Spark mechanics.</strong> <code>ALS</code> with implicit preference (<code>implicitPrefs = true</code>), <code>alpha</code>, regularization, and ranking cut-offs; <code>recommendForUserSubset</code> vs <code>recommendForAllUsers</code> memory profile; embedding export (<code>.userFactors</code> / <code>.itemFactors</code>) and serving via broadcast lookup or a <code>mapInPandas</code> scorer; streaming inference in <code>foreachBatch</code> with model hot-reload; cold-start handling via popularity fallback; NDCG and recall@k offline evaluation; deployment packaging (<code>--py-files</code> zip), config via <code>--conf</code> and environment, structured JSON logging, and a CI pipeline that builds both language stacks and runs the regression suite.</p>
+<p><strong>You will ship.</strong> A complete, deployable project: trainer, exporter, streaming scorer, offline evaluator, <code>Dockerfile</code>, <code>docker-compose</code>, CI workflow, and a runbook with SLOs and alert thresholds.</p>
+<p><strong>Difficulty</strong> ★★★★★</p>
+<hr>
+<h2 id="what-you-will-be-able-to-say-after-project-20">What you will be able to say after Project 20</h2>
+<ul>
+<li>"I can read a physical plan and tell you where the shuffle, skew, and spill are."</li>
+<li>"I can prove a pipeline is idempotent under retries — and demonstrate it with a test."</li>
+<li>"I know when a broadcast join will OOM the driver before it happens."</li>
+<li>"I can size streaming state from event rate and watermark, not guesswork."</li>
+<li>"I can implement the same business logic in PySpark and Java and explain every API difference."</li>
+<li>"I can put a Spark job behind CI, SLOs, and a runbook."</li>
+</ul>
+    </article>
+
+    <footer class="book-footer">
+      <p><strong>Mastering Apache Spark</strong> — 20 Real-World Data Engineering Projects in Python &amp; Java<br>
+      Apache Spark 3.5.x · Java 17 · Python 3.10+ · First Edition</p>
+      <p>Every listing in this book is complete and runnable. Verify your environment with the
+      two smoke tests in the Environment Setup chapter before starting Project 1.</p>
+    </footer>
+
+  </main>
+
+</div>
+
+<script>
+/* ==========================================================================
+   Mastering Apache Spark — book behaviour
+   Dependency-free: navigation, scroll spy, copy buttons, reading progress.
+   ========================================================================== */
+
+(function () {
+  "use strict";
+
+  var TOPBAR_OFFSET = 80;
+
+  /* ---------------------------------------------------------------- nav --- */
+
+  var sidebar = document.getElementById("sidebar");
+  var navToggle = document.getElementById("navToggle");
+
+  if (navToggle && sidebar) {
+    navToggle.addEventListener("click", function () {
+      sidebar.classList.toggle("open");
+    });
+  }
+
+  if (sidebar) {
+    sidebar.addEventListener("click", function (event) {
+      var link = event.target.closest("a");
+      if (link && window.innerWidth <= 900) {
+        sidebar.classList.remove("open");
+      }
+    });
+  }
+
+  /* --------------------------------------------------------- scroll spy --- */
+
+  var links = {};
+  Array.prototype.forEach.call(
+    document.querySelectorAll(".nav-list a[href^='#']"),
+    function (anchor) {
+      links[anchor.getAttribute("href").slice(1)] = anchor;
+    }
+  );
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("article h1[id], article h2[id], article h3[id]")
+  );
+
+  var activeId = null;
+
+  function setActive(id) {
+    if (id === activeId || !links[id]) {
+      return;
+    }
+    var previous = activeId && links[activeId];
+    if (previous) {
+      previous.classList.remove("active");
+    }
+    links[id].classList.add("active");
+    activeId = id;
+
+    var item = links[id];
+    var box = sidebar.getBoundingClientRect();
+    var rect = item.getBoundingClientRect();
+    if (rect.top < box.top + 40 || rect.bottom > box.bottom - 40) {
+      item.scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  var ticking = false;
+
+  function onScroll() {
+    if (ticking) {
+      return;
+    }
+    ticking = true;
+    window.requestAnimationFrame(function () {
+      ticking = false;
+
+      /* reading progress */
+      var bar = document.getElementById("progress");
+      if (bar) {
+        var doc = document.documentElement;
+        var max = doc.scrollHeight - doc.clientHeight;
+        var ratio = max > 0 ? doc.scrollTop / max : 0;
+        bar.style.width = (ratio * 100).toFixed(2) + "%";
+      }
+
+      /* active section */
+      if (headings.length) {
+        var current = null;
+        for (var i = 0; i < headings.length; i += 1) {
+          var top = headings[i].getBoundingClientRect().top;
+          if (top - TOPBAR_OFFSET <= 0) {
+            current = headings[i].id;
+          } else {
+            break;
+          }
+        }
+        if (!current) {
+          current = headings[0].id;
+        }
+        setActive(current);
+      }
+    });
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  onScroll();
+
+  /* ---------------------------------------------------------- copy code --- */
+
+  function attachCopyButtons() {
+    var blocks = document.querySelectorAll("article pre, .book-cover pre");
+
+    Array.prototype.forEach.call(blocks, function (pre) {
+      if (pre.dataset.copyReady === "1") {
+        return;
+      }
+      pre.dataset.copyReady = "1";
+
+      var text = pre.innerText.replace(/\n+$/, "");
+
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "copy-btn";
+      button.textContent = "Copy";
+      button.setAttribute("aria-label", "Copy code to clipboard");
+
+      button.addEventListener("click", function () {
+        function done() {
+          button.textContent = "Copied";
+          button.classList.add("copied");
+          window.setTimeout(function () {
+            button.textContent = "Copy";
+            button.classList.remove("copied");
+          }, 1600);
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () {
+            fallbackCopy(text, done);
+          });
+        } else {
+          fallbackCopy(text, done);
+        }
+      });
+
+      pre.appendChild(button);
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.top = "-1000px";
+    document.body.appendChild(area);
+    area.select();
+    try {
+      document.execCommand("copy");
+      done();
+    } catch (error) {
+      /* Clipboard unavailable (e.g. file:// in some browsers). */
+    }
+    document.body.removeChild(area);
+  }
+
+  /* ------------------------------------------------------ external links -- */
+
+  Array.prototype.forEach.call(document.querySelectorAll("article a[href^='http']"), function (a) {
+    a.setAttribute("target", "_blank");
+    a.setAttribute("rel", "noopener noreferrer");
+  });
+
+  /* ---------------------------------------------------------------- boot -- */
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", attachCopyButtons);
+  } else {
+    attachCopyButtons();
+  }
+})();
+
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Database,
   FileUp,
+  FolderSearch,
   Loader2,
   Upload,
   X,
@@ -15,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import {
   ApiError,
   importFile,
+  pickDataFile,
   type ImportFileResponse,
   type ImportMode,
   type ImportSourceFormat,
@@ -56,6 +58,7 @@ export function ImportPanel({ online, onImported, onClose }: ImportPanelProps) {
   const [hasHeader, setHasHeader] = useState(true);
   const [delimiter, setDelimiter] = useState(",");
   const [running, setRunning] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportFileResponse | null>(null);
 
@@ -63,6 +66,25 @@ export function ImportPanel({ online, onImported, onClose }: ImportPanelProps) {
     sourceFormat === "csv" ||
     sourceFormat === "txt" ||
     sourceFormat === "auto";
+
+  const browseFile = async () => {
+    setActiveTab("file");
+    if (!online || picking) return;
+    setPicking(true);
+    setError(null);
+    try {
+      const selection = await pickDataFile();
+      if (selection.path) setPath(selection.path);
+    } catch (err) {
+      setError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : "The file picker could not be opened.",
+      );
+    } finally {
+      setPicking(false);
+    }
+  };
 
   const submit = async () => {
     const trimmedPath = path.trim();
@@ -128,16 +150,21 @@ export function ImportPanel({ online, onImported, onClose }: ImportPanelProps) {
       <div className="mt-4 flex gap-2 border-b border-border/60 pb-3">
         <button
           type="button"
-          onClick={() => setActiveTab("file")}
+          onClick={() => void browseFile()}
+          disabled={!online || picking}
           className={cn(
-            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
             activeTab === "file"
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-muted/50",
           )}
         >
-          <FileUp className="size-3.5" />
-          Local file
+          {picking ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <FileUp className="size-3.5" />
+          )}
+          {picking ? "Waiting for picker…" : "Local file"}
         </button>
         <button
           type="button"
@@ -174,14 +201,30 @@ export function ImportPanel({ online, onImported, onClose }: ImportPanelProps) {
           <label className={labelClass} htmlFor="import-path">
             Source path
           </label>
-          <input
-            id="import-path"
-            className={inputClass}
-            value={path}
-            onChange={(event) => setPath(event.target.value)}
-            placeholder="C:\data\customers.csv or data_warehouse\staging\events.json"
-            spellCheck={false}
-          />
+          <div className="flex gap-2">
+            <input
+              id="import-path"
+              className={cn(inputClass, "min-w-0 flex-1")}
+              value={path}
+              onChange={(event) => setPath(event.target.value)}
+              placeholder="C:\data\customers.csv or data_warehouse\staging\events.json"
+              spellCheck={false}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 shrink-0"
+              onClick={() => void browseFile()}
+              disabled={!online || picking}
+            >
+              {picking ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <FolderSearch />
+              )}
+              Browse…
+            </Button>
+          </div>
           <p className="mt-1 text-[10px] text-muted-foreground/70">
             Absolute paths are used as-is; relative paths resolve from the
             repository root.

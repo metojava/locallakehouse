@@ -30,12 +30,51 @@ _SUFFIX_CATEGORIES = {
     ".zip": "archive",
 }
 
+# Binary formats we never decode as text in the preview endpoint.
+_BINARY_SUFFIXES = {
+    ".parquet",
+    ".orc",
+    ".avro",
+    ".db",
+    ".gz",
+    ".zip",
+    ".jar",
+    ".class",
+    ".snappy",
+    ".zst",
+    ".lz4",
+    ".bin",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".pdf",
+}
+
+_LANGUAGE_BY_SUFFIX = {
+    ".json": "json",
+    ".jsonl": "json",
+    ".log": "log",
+    ".csv": "csv",
+    ".tsv": "csv",
+    ".md": "markdown",
+    ".markdown": "markdown",
+    ".xml": "xml",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+}
+
 
 def _category_for(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix in _SUFFIX_CATEGORIES:
         return _SUFFIX_CATEGORIES[suffix]
     return suffix.lstrip(".") or "other"
+
+
+def _language_for(path: Path) -> str:
+    return _LANGUAGE_BY_SUFFIX.get(path.suffix.lower(), "text")
 
 
 def _iso_timestamp(timestamp: float) -> str:
@@ -110,6 +149,71 @@ def explore_storage(
         "path": normalized,
         "tree": tree,
         "summary": summary,
+    }
+
+
+def resolve_storage_file(relative_path: str) -> Tuple[Path, str]:
+    """Resolve a warehouse-relative file path for preview or download.
+
+    Paths are resolved against ``warehouse_dir`` and must stay inside it, so the
+    storage endpoints can never expose arbitrary files from the host machine.
+    """
+
+    root = get_settings().warehouse_dir.resolve()
+    normalized = (relative_path or "").strip().replace("\\", "/").strip("/")
+    if not normalized:
+        raise StoragePathError("A file path is required.")
+
+    target = (root / normalized).resolve()
+    try:
+        target.relative_to(root)
+    except ValueError as exc:
+        raise StoragePathError(
+            "Path escapes the lakehouse warehouse directory."
+        ) from exc
+
+    if not target.exists():
+        raise StorageNotFoundError(normalized)
+    if not target.is_file():
+        raise StoragePathError("The storage explorer can only open files.")
+    return target, normalized
+
+
+def read_storage_file(relative_path: str) -> Dict[str, Any]:
+    """Read a warehouse file for the read-only storage preview."""
+
+    settings = get_settings()
+    target, normalized = resolve_storage_file(relative_path)
+
+    size = target.stat().st_size
+    max_bytes = max(1, settings.storage_preview_max_bytes)
+    binary = target.suffix.lower() in _BINARY_SUFFIXES
+    truncated = False
+    data = b""
+
+    if not binary:
+        try:
+            with target.open("rb") as handle:
+                data = handle.read(max_bytes + 1)
+        except OSError as exc:
+            raise StoragePathError(f"Could not read file: {exc}") from exc
+        if len(data) > max_bytes:
+            data = data[:max_bytes]
+            truncated = True
+        # NUL bytes are a reliable signal for binary content that slipped past
+        # the extension allow-list (e.g. an extension-less data file).
+        if b"\x00" in data[:8192]:
+            binary = True
+
+    return {
+        "path": normalized,
+        "name": target.name,
+        "content": "" if binary else data.decode("utf-8", errors="replace"),
+        "language": _language_for(target),
+        "size": size,
+        "binary": binary,
+        "truncated": truncated,
+        "max_bytes": max_bytes,
     }
 
 

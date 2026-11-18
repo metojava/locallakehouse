@@ -9,7 +9,7 @@ from typing import Optional
 
 from pyspark.sql import SparkSession
 
-from .config import Settings, get_settings
+from .config import Settings, ensure_pyspark_python, get_settings
 from .services.spark_setup import SparkSetupError, resolve_spark_home
 
 logger = logging.getLogger(__name__)
@@ -81,6 +81,17 @@ class SparkManager:
         settings = self._settings
         settings.ensure_directories()
 
+        # A py4j gateway port inherited from another process would make PySpark
+        # connect to a dead JVM instead of launching its own.
+        os.environ.pop("PYSPARK_GATEWAY_PORT", None)
+        os.environ.pop("PYSPARK_GATEWAY_SECRET", None)
+
+        # Spark's Python workers default to ``python3``, which is absent on
+        # Windows. Point them at the interpreter running the backend so RDD and
+        # UDF work does not fail with "Cannot run program \"python3\"".
+        python_executable = ensure_pyspark_python()
+        logger.info("Spark Python workers will use %s", python_executable)
+
         # Resolve the Spark installation to run: an explicitly configured (and
         # compatible) external Spark home, otherwise the PySpark-bundled one.
         try:
@@ -126,6 +137,16 @@ class SparkManager:
             .config("spark.ui.enabled", "false")
             .config("spark.ui.showConsoleProgress", "false")
             .config("spark.local.dir", str(settings.spark_local_dir))
+            # On Windows the local-mode executor starts its heartbeater before
+            # SparkContext initialises the driver BlockManager. With the default
+            # 10s interval the first heartbeat can land in that window and Spark
+            # throws "BlockManagerId.executorId() ... idWithoutTopologyInfo is
+            # null" (SPARK-53042). The first heartbeat is sent after
+            # interval + random(0..interval), so a long interval keeps it well
+            # past initialisation. Spark requires network.timeout to be greater
+            # than the heartbeat interval, so both are raised together.
+            .config("spark.executor.heartbeatInterval", "300s")
+            .config("spark.network.timeout", "600s")
             .config("spark.sql.warehouse.dir", delta_warehouse_uri)
             # Use the on-disk Derby Hive metastore instead of Spark's default
             # in-memory catalog, otherwise Delta tables disappear on restart.
@@ -189,6 +210,7 @@ class SparkManager:
             session = builder.getOrCreate()
             session.sparkContext.setLogLevel(settings.spark_log_level)
         except Exception as exc:  # pragma: no cover - environment dependent
+            self._reset_pyspark_state()
             raise SparkUnavailableError(
                 "Could not start Apache Spark. Verify Java 17+, JAVA_HOME, network "
                 "access to Maven Central for the Delta/Iceberg jars, and on Windows "
@@ -202,6 +224,31 @@ class SparkManager:
             settings.iceberg_warehouse_dir,
         )
         return session
+
+    @staticmethod
+    def _reset_pyspark_state() -> None:
+        """Forget PySpark's cached py4j gateway after a failed startup.
+
+        ``SparkSession.builder.getOrCreate()`` stores the gateway on
+        ``SparkContext`` class attributes. If startup fails the JVM may already
+        be gone, and later attempts would keep reusing that dead gateway instead
+        of launching a fresh one. Clearing the cached objects lets the next
+        request start cleanly without restarting the backend.
+        """
+        try:
+            from pyspark import SparkContext
+
+            gateway = SparkContext._gateway
+            SparkContext._gateway = None
+            SparkContext._jvm = None
+            SparkContext._active_spark_context = None
+            if gateway is not None:
+                try:
+                    gateway.shutdown_gateway()
+                except Exception:  # pragma: no cover - gateway already dead
+                    pass
+        except Exception:  # pragma: no cover - defensive
+            logger.debug("Could not reset PySpark gateway state", exc_info=True)
 
     def stop(self) -> None:
         with self._init_lock:

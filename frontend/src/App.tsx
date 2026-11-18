@@ -13,6 +13,7 @@ import { TopBar } from "@/components/top-bar";
 import { WorkspacePage } from "@/components/workspace-page";
 import {
   ApiError,
+  cancelExecution,
   executeJvm,
   executePySpark,
   executeSql,
@@ -173,6 +174,30 @@ export default function App() {
     [jvm, online, updateJvm],
   );
 
+  const stopQuery = useCallback(async () => {
+    try {
+      await cancelExecution("sql");
+    } catch {
+      // The command may have already finished; nothing else to do.
+    }
+  }, []);
+
+  const stopPySpark = useCallback(async () => {
+    try {
+      await cancelExecution("pyspark");
+    } catch {
+      // The command may have already finished; nothing else to do.
+    }
+  }, []);
+
+  const stopJvm = useCallback(async (language: JvmLanguage) => {
+    try {
+      await cancelExecution(language);
+    } catch {
+      // The command may have already finished; nothing else to do.
+    }
+  }, []);
+
   const useTable = useCallback(
     (fullName: string) => {
       setSql(`SELECT * FROM ${fullName} LIMIT 100;\n`);
@@ -202,6 +227,7 @@ export default function App() {
                 sql={sql}
                 onSqlChange={setSql}
                 onRun={runQuery}
+                onStop={stopQuery}
                 running={sqlRunning}
                 result={sqlResult}
                 error={sqlError}
@@ -215,6 +241,7 @@ export default function App() {
                 script={pyspark}
                 onScriptChange={setPyspark}
                 onRun={runPySpark}
+                onStop={stopPySpark}
                 running={pysparkRunning}
                 result={pysparkResult}
                 error={pysparkError}
@@ -227,6 +254,7 @@ export default function App() {
                 source={javaTabs.source}
                 onSourceChange={javaTabs.setSource}
                 onRun={() => void runJvm("java", javaTabs.source)}
+                onStop={() => void stopJvm("java")}
                 running={jvm.java.running}
                 result={jvm.java.result}
                 error={jvm.java.error}
@@ -239,6 +267,7 @@ export default function App() {
                 source={scalaTabs.source}
                 onSourceChange={scalaTabs.setSource}
                 onRun={() => void runJvm("scala", scalaTabs.source)}
+                onStop={() => void stopJvm("scala")}
                 running={jvm.scala.running}
                 result={jvm.scala.result}
                 error={jvm.scala.error}

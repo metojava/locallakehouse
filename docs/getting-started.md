@@ -21,7 +21,7 @@ Startups need to move fast without big infrastructure bills. The Open Lakehouse 
 
 ### 1. Install prerequisites
 
-- Python 3.11+
+- Python 3.10+
 - Java 17+
 - Node.js 20+
 
@@ -79,22 +79,13 @@ SELECT * FROM demo.daily_revenue ORDER BY day DESC LIMIT 30;
 
 ### Share results
 
-Copy query results from the UI (JSON), or query them via the REST API:
+Export query results from the UI, or query them via the REST API:
 
 ```powershell
 curl.exe -X POST http://127.0.0.1:8000/api/execute-sql `
   -H "Content-Type: application/json" `
   -d '{"sql":"SELECT * FROM demo.daily_revenue ORDER BY day DESC LIMIT 30"}'
 ```
-
-## Optional: Java and Scala notebooks
-
-Notebooks run Python on the built-in PySpark engine by default. To write a notebook in Java or Scala:
-
-1. Install a JDK 17+ and make sure `java -version` works.
-2. Open a notebook and check the **Kernel** dropdown. If **Java** is missing, click **Install Java kernel** in the notebook header (this downloads IJava from GitHub).
-3. For **Scala**, install the almond kernel once with coursier. The exact commands are in the README under *Java and Scala notebook kernels*.
-4. Select the kernel in the dropdown. Each notebook keeps its own kernel process.
 
 ## When to move to the cloud
 

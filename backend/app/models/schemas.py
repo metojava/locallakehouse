@@ -223,6 +223,17 @@ class StorageResponse(BaseModel):
     summary: StorageSummary
 
 
+class StorageFileResponse(BaseModel):
+    path: str
+    name: str
+    content: str
+    language: str
+    size: int
+    binary: bool = False
+    truncated: bool = False
+    max_bytes: int
+
+
 class ExecutePySparkRequest(BaseModel):
     script: str = Field(..., min_length=1, max_length=200_000)
     timeout_seconds: Optional[int] = Field(default=None, ge=1, le=3_600)
@@ -319,6 +330,10 @@ class NotebookResetRequest(BaseModel):
     notebook_id: str = Field(..., min_length=1, max_length=120)
 
 
+class CancelRequest(BaseModel):
+    target: str = Field(..., min_length=1, max_length=512)
+
+
 class KernelInfo(BaseModel):
     name: str
     display_name: str
@@ -329,6 +344,7 @@ class KernelInfo(BaseModel):
 class KernelListResponse(BaseModel):
     kernels: List[KernelInfo]
     java_installed: bool
+    scala_installed: bool
 
 
 class KernelInstallResponse(BaseModel):

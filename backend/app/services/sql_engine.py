@@ -13,6 +13,7 @@ from pyspark.sql import DataFrame, SparkSession
 
 from ..config import get_settings
 from ..spark_manager import SparkUnavailableError, spark_manager
+from .cancellation import CancelToken, cancellation_registry
 from .sql_utils import (
     ROW_RETURNING_STATEMENTS,
     classify_engine,
@@ -38,6 +39,10 @@ class QueryTimeoutError(QueryExecutionError):
     pass
 
 
+class QueryCancelledError(QueryExecutionError):
+    pass
+
+
 def current_catalog(spark: SparkSession) -> Optional[str]:
     try:
         return spark.catalog.currentCatalog()
@@ -49,6 +54,7 @@ def execute_sql(
     sql: str,
     max_rows: Optional[int] = None,
     timeout_seconds: Optional[int] = None,
+    target: str = "sql",
 ) -> Dict[str, Any]:
     settings = get_settings()
     statements = split_sql_statements(sql)
@@ -57,67 +63,81 @@ def execute_sql(
 
     row_cap = max_rows or settings.max_result_rows
     timeout = timeout_seconds or settings.query_timeout_seconds
+    token = cancellation_registry.begin(target)
 
-    with spark_manager.sql_lock:
-        spark = spark_manager.get_session()
-        active_catalog = current_catalog(spark)
-        executions: List[Dict[str, Any]] = []
-        last_result: Optional[Dict[str, Any]] = None
+    try:
+        with spark_manager.sql_lock:
+            spark = spark_manager.get_session()
+            active_catalog = current_catalog(spark)
+            executions: List[Dict[str, Any]] = []
+            last_result: Optional[Dict[str, Any]] = None
 
-        for statement in statements:
-            engine = classify_engine(statement, active_catalog)
-            kind = statement_type(statement)
-            started = time.perf_counter()
-            try:
-                result = _run_statement(spark, statement, kind, row_cap, timeout)
-            except QueryTimeoutError:
-                raise
-            except SparkUnavailableError:
-                raise
-            except Exception as exc:
-                message = format_spark_error(exc)
-                logger.warning(
-                    "SQL statement failed (engine=%s, type=%s): %s",
-                    engine,
-                    kind,
-                    message.splitlines()[0] if message else exc,
+            for statement in statements:
+                if token.cancelled:
+                    raise QueryCancelledError("Query cancelled by user.")
+
+                engine = classify_engine(statement, active_catalog)
+                kind = statement_type(statement)
+                started = time.perf_counter()
+                try:
+                    result = _run_statement(
+                        spark, statement, kind, row_cap, timeout, token
+                    )
+                except (QueryCancelledError, QueryTimeoutError, SparkUnavailableError):
+                    raise
+                except Exception as exc:
+                    if token.cancelled:
+                        raise QueryCancelledError(
+                            "Query cancelled by user."
+                        ) from exc
+                    message = format_spark_error(exc)
+                    logger.warning(
+                        "SQL statement failed (engine=%s, type=%s): %s",
+                        engine,
+                        kind,
+                        message.splitlines()[0] if message else exc,
+                    )
+                    raise QueryExecutionError(message) from exc
+
+                if token.cancelled:
+                    raise QueryCancelledError("Query cancelled by user.")
+
+                last_result = result
+                elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+                executions.append(
+                    {
+                        "statement": statement,
+                        "engine": engine,
+                        "statement_type": kind,
+                        "columns": result["columns"],
+                        "row_count": result["row_count"],
+                        "execution_time_ms": elapsed_ms,
+                        "truncated": result["truncated"],
+                        "max_rows": row_cap,
+                    }
                 )
-                raise QueryExecutionError(message) from exc
 
-            last_result = result
-            elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
-            executions.append(
-                {
-                    "statement": statement,
-                    "engine": engine,
-                    "statement_type": kind,
-                    "columns": result["columns"],
-                    "row_count": result["row_count"],
-                    "execution_time_ms": elapsed_ms,
-                    "truncated": result["truncated"],
-                    "max_rows": row_cap,
-                }
-            )
+                if kind in {"USE", "SET"}:
+                    active_catalog = current_catalog(spark)
 
-            if kind in {"USE", "SET"}:
-                active_catalog = current_catalog(spark)
-
-        assert last_result is not None
-        last = executions[-1]
-        return {
-            "sql": sql,
-            "engine": last["engine"],
-            "statement_type": last["statement_type"],
-            "columns": last["columns"],
-            "rows": last_result["rows"],
-            "row_count": last["row_count"],
-            "execution_time_ms": round(
-                sum(execution["execution_time_ms"] for execution in executions), 2
-            ),
-            "truncated": last["truncated"],
-            "max_rows": row_cap,
-            "statements": executions,
-        }
+            assert last_result is not None
+            last = executions[-1]
+            return {
+                "sql": sql,
+                "engine": last["engine"],
+                "statement_type": last["statement_type"],
+                "columns": last["columns"],
+                "rows": last_result["rows"],
+                "row_count": last["row_count"],
+                "execution_time_ms": round(
+                    sum(execution["execution_time_ms"] for execution in executions), 2
+                ),
+                "truncated": last["truncated"],
+                "max_rows": row_cap,
+                "statements": executions,
+            }
+    finally:
+        cancellation_registry.finish(token)
 
 
 def _run_statement(
@@ -126,21 +146,31 @@ def _run_statement(
     kind: str,
     max_rows: int,
     timeout_seconds: int,
+    token: CancelToken,
 ) -> Dict[str, Any]:
     job_group = f"lakehouse-{uuid.uuid4()}"
     cancelled = threading.Event()
 
+    def request_cancel() -> None:
+        cancelled.set()
+        try:
+            spark.sparkContext.cancelJobGroup(job_group)
+        except Exception:  # pragma: no cover - best effort cancellation
+            pass
+
+    token.add_callback(request_cancel)
+
     def task() -> Dict[str, Any]:
-        if cancelled.is_set():
-            raise QueryTimeoutError("Query cancelled before execution started.")
+        if cancelled.is_set() or token.cancelled:
+            raise QueryCancelledError("Query cancelled before execution started.")
         spark.sparkContext.setJobGroup(
             job_group,
             f"workbench: {statement[:120]}",
             interruptOnCancel=True,
         )
-        if cancelled.is_set():
+        if cancelled.is_set() or token.cancelled:
             spark.sparkContext.cancelJobGroup(job_group)
-            raise QueryTimeoutError("Query cancelled before it started running.")
+            raise QueryCancelledError("Query cancelled before it started running.")
         try:
             return _collect_result(spark, statement, kind, max_rows)
         finally:
@@ -154,6 +184,8 @@ def _run_statement(
     try:
         return future.result(timeout=timeout_seconds)
     except FutureTimeoutError as exc:
+        if token.cancelled:
+            raise QueryCancelledError("Query cancelled by user.") from exc
         cancelled.set()
         try:
             spark.sparkContext.cancelJobGroup(job_group)
@@ -163,6 +195,7 @@ def _run_statement(
             f"Query exceeded the {timeout_seconds}s execution timeout and was cancelled."
         ) from exc
     finally:
+        token.remove_callback(request_cancel)
         executor.shutdown(wait=False, cancel_futures=True)
 
 

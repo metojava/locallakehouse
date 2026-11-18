@@ -1,6 +1,14 @@
 import { useState } from "react";
 
-import { Code2, Loader2, Play, RotateCcw, Sparkles, Upload } from "lucide-react";
+import {
+  Code2,
+  Loader2,
+  Play,
+  RotateCcw,
+  Sparkles,
+  Square,
+  Upload,
+} from "lucide-react";
 
 import { BufferTabs } from "@/components/buffer-tabs";
 import { CodeEditor } from "@/components/code-editor";
@@ -19,6 +27,7 @@ interface SqlEditorProps {
   sql: string;
   onSqlChange: (sql: string) => void;
   onRun: () => void;
+  onStop: () => void;
   running: boolean;
   result: ExecuteSqlResponse | null;
   error: string | null;
@@ -31,6 +40,7 @@ export function SqlEditor({
   sql,
   onSqlChange,
   onRun,
+  onStop,
   running,
   result,
   error,
@@ -107,6 +117,17 @@ export function SqlEditor({
               )}
               {running ? "Running…" : "Run Query"}
             </Button>
+            {running ? (
+              <Button
+                variant="destructive"
+                onClick={onStop}
+                className="shadow-lg shadow-destructive/20"
+                title="Cancel the running query"
+              >
+                <Square className="fill-current" />
+                Stop
+              </Button>
+            ) : null}
           </div>
         </div>
 

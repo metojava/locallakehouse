@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
 
 from .. import __version__
 from ..config import get_settings
@@ -24,6 +25,7 @@ from ..models.schemas import (
     ImportDatabaseResponse,
     ImportFileRequest,
     ImportFileResponse,
+    CancelRequest,
     CreateNotebookRequest,
     FilePickResponse,
     JvmRunRequest,
@@ -41,19 +43,24 @@ from ..models.schemas import (
     SparkDownloadStatus,
     SparkHomeRequest,
     SqlRequest,
+    StorageFileResponse,
     StorageResponse,
     TablesResponse,
     TextFileResponse,
     WorkspaceResponse,
     WorkspaceRootRequest,
 )
+from ..services.cancellation import cancellation_registry
 from ..services.catalog import list_catalogs
 from ..services.folder_picker import FolderPickerError, pick_file
-from ..services.jvm_runner import JvmRunError, run_jvm_program
+from ..services.jvm_runner import JvmRunCancelled, JvmRunError, run_jvm_program
 from ..services.kernel_service import (
+    KernelCancelledError,
     KernelError,
     install_java_kernel,
+    install_scala_kernel,
     is_builtin,
+    is_sql_kernel,
     kernel_service,
     list_kernels,
 )
@@ -84,10 +91,12 @@ from ..services.jdbc_importer import (
     preview_database_table,
 )
 from ..services.pyspark_engine import (
+    PySparkCancelledError,
     PySparkExecutionError,
     PySparkTimeoutError,
     PySparkValidationError,
     execute_notebook_cell,
+    execute_notebook_sql_cell,
     execute_pyspark,
     reset_notebook,
 )
@@ -102,6 +111,7 @@ from ..services.spark_setup import (
 )
 from ..services.sql_engine import (
     InvalidSqlError,
+    QueryCancelledError,
     QueryExecutionError,
     QueryTimeoutError,
     execute_sql,
@@ -111,6 +121,8 @@ from ..services.storage import (
     StorageNotFoundError,
     StoragePathError,
     explore_storage,
+    read_storage_file,
+    resolve_storage_file,
 )
 from ..services.workspace import (
     WorkspaceError,
@@ -211,7 +223,10 @@ def run_sql(payload: SqlRequest) -> ExecuteSqlResponse:
             payload.sql,
             max_rows=payload.max_rows,
             timeout_seconds=payload.timeout_seconds,
+            target="sql",
         )
+    except QueryCancelledError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except QueryTimeoutError as exc:
         raise HTTPException(status_code=408, detail=str(exc)) from exc
     except InvalidSqlError as exc:
@@ -235,7 +250,10 @@ def run_pyspark(payload: ExecutePySparkRequest) -> ExecutePySparkResponse:
         result = execute_pyspark(
             payload.script,
             timeout_seconds=payload.timeout_seconds,
+            target="pyspark",
         )
+    except PySparkCancelledError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except PySparkTimeoutError as exc:
         raise HTTPException(status_code=408, detail=str(exc)) from exc
     except PySparkValidationError as exc:
@@ -331,6 +349,56 @@ def storage_explorer(
         ) from exc
 
     return StorageResponse(**result)
+
+
+@router.get("/storage-explorer/file", response_model=StorageFileResponse)
+def storage_file(
+    path: str = Query(
+        ...,
+        min_length=1,
+        max_length=2_048,
+        description="File path relative to the lakehouse warehouse root.",
+    ),
+) -> StorageFileResponse:
+    try:
+        result = read_storage_file(path)
+    except StorageNotFoundError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"Warehouse file not found: {exc}"
+        ) from exc
+    except StoragePathError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500, detail=f"Could not read the warehouse file: {exc}"
+        ) from exc
+
+    return StorageFileResponse(**result)
+
+
+@router.get("/storage-explorer/download")
+def storage_download(
+    path: str = Query(
+        ...,
+        min_length=1,
+        max_length=2_048,
+        description="File path relative to the lakehouse warehouse root.",
+    ),
+) -> FileResponse:
+    try:
+        target, _ = resolve_storage_file(path)
+    except StorageNotFoundError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"Warehouse file not found: {exc}"
+        ) from exc
+    except StoragePathError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return FileResponse(
+        path=target,
+        media_type="application/octet-stream",
+        filename=target.name,
+    )
 
 
 @router.get("/connections", response_model=List[DatabaseConnectionResponse])
@@ -529,8 +597,23 @@ def install_java_notebook_kernel() -> KernelInstallResponse:
     return KernelInstallResponse(**result)
 
 
+@router.post("/kernels/scala/install", response_model=KernelInstallResponse)
+def install_scala_notebook_kernel() -> KernelInstallResponse:
+    try:
+        result = install_scala_kernel()
+    except KernelError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except JvmRunError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # pragma: no cover - safety net
+        logger.exception("Unexpected Scala kernel install failure")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return KernelInstallResponse(**result)
+
+
 @router.post("/notebook/execute", response_model=ExecutePySparkResponse)
 def run_notebook_cell(payload: NotebookExecuteRequest) -> ExecutePySparkResponse:
+    target = f"notebook:{payload.notebook_id}"
     if not is_builtin(payload.kernel_name):
         try:
             result = kernel_service.execute(
@@ -538,7 +621,10 @@ def run_notebook_cell(payload: NotebookExecuteRequest) -> ExecutePySparkResponse
                 payload.kernel_name or "",
                 payload.script,
                 timeout_seconds=payload.timeout_seconds,
+                target=target,
             )
+        except KernelCancelledError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         except KernelError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:  # pragma: no cover - safety net
@@ -547,11 +633,22 @@ def run_notebook_cell(payload: NotebookExecuteRequest) -> ExecutePySparkResponse
         return ExecutePySparkResponse(**result)
 
     try:
-        result = execute_notebook_cell(
-            payload.notebook_id,
-            payload.script,
-            timeout_seconds=payload.timeout_seconds,
-        )
+        if is_sql_kernel(payload.kernel_name):
+            result = execute_notebook_sql_cell(
+                payload.notebook_id,
+                payload.script,
+                timeout_seconds=payload.timeout_seconds,
+                target=target,
+            )
+        else:
+            result = execute_notebook_cell(
+                payload.notebook_id,
+                payload.script,
+                timeout_seconds=payload.timeout_seconds,
+                target=target,
+            )
+    except PySparkCancelledError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except PySparkTimeoutError as exc:
         raise HTTPException(status_code=408, detail=str(exc)) from exc
     except PySparkValidationError as exc:
@@ -579,13 +676,29 @@ def reset_notebook_kernel(payload: NotebookResetRequest) -> dict:
 @router.post("/execute-jvm", response_model=JvmRunResponse)
 def execute_jvm(payload: JvmRunRequest) -> JvmRunResponse:
     try:
-        result = run_jvm_program(payload.language, payload.source, payload.timeout_seconds)
+        result = run_jvm_program(
+            payload.language,
+            payload.source,
+            payload.timeout_seconds,
+            target=payload.language,
+        )
+    except JvmRunCancelled as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except JvmRunError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # pragma: no cover - safety net
         logger.exception("Unexpected JVM run failure")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return JvmRunResponse(**result)
+
+
+@router.post("/cancel")
+def cancel_execution(payload: CancelRequest) -> dict:
+    """Cancel the latest command registered for an editor target."""
+
+    cancelled = cancellation_registry.cancel(payload.target)
+    logger.info("Cancel requested for %s (cancelled=%s)", payload.target, cancelled)
+    return {"cancelled": cancelled, "target": payload.target}
 
 
 @router.post("/files/pick", response_model=FilePickResponse)

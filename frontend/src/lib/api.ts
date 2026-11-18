@@ -227,6 +227,17 @@ export interface StorageResponse {
   summary: StorageSummary;
 }
 
+export interface StorageFileResponse {
+  path: string;
+  name: string;
+  content: string;
+  language: string;
+  size: number;
+  binary: boolean;
+  truncated: boolean;
+  max_bytes: number;
+}
+
 export interface ExecutePySparkResponse {
   script: string;
   engine: Engine;
@@ -409,6 +420,15 @@ export function getHealth(): Promise<HealthResponse> {
   return request<HealthResponse>("/api/health");
 }
 
+export function cancelExecution(
+  target: string,
+): Promise<{ cancelled: boolean; target: string }> {
+  return request<{ cancelled: boolean; target: string }>("/api/cancel", {
+    method: "POST",
+    body: JSON.stringify({ target }),
+  });
+}
+
 export function executeSql(
   sql: string,
   options: { maxRows?: number; timeoutSeconds?: number } = {},
@@ -568,6 +588,18 @@ export function getStorage(
   return request<StorageResponse>(`/api/storage-explorer?${params.toString()}`);
 }
 
+export function getStorageFile(path: string): Promise<StorageFileResponse> {
+  const params = new URLSearchParams({ path });
+  return request<StorageFileResponse>(
+    `/api/storage-explorer/file?${params.toString()}`,
+  );
+}
+
+export function getStorageDownloadUrl(path: string): string {
+  const params = new URLSearchParams({ path });
+  return `${API_BASE_URL}/api/storage-explorer/download?${params.toString()}`;
+}
+
 export function getSparkConfig(): Promise<SparkConfigResponse> {
   return request<SparkConfigResponse>("/api/spark/config");
 }
@@ -633,6 +665,7 @@ export interface KernelInfo {
 export interface KernelListResponse {
   kernels: KernelInfo[];
   java_installed: boolean;
+  scala_installed: boolean;
 }
 
 export function getKernels(): Promise<KernelListResponse> {
@@ -645,6 +678,14 @@ export function installJavaKernel(): Promise<{
   message: string;
 }> {
   return request("/api/kernels/java/install", { method: "POST" });
+}
+
+export function installScalaKernel(): Promise<{
+  installed: boolean;
+  already_installed: boolean;
+  message: string;
+}> {
+  return request("/api/kernels/scala/install", { method: "POST" });
 }
 
 export function resetNotebookKernel(

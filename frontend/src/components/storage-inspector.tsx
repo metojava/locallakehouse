@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
   ArrowUp,
+  Check,
   ChevronDown,
   ChevronRight,
+  Copy,
   Database,
+  Download,
   File,
   FileArchive,
   FileJson,
@@ -12,18 +15,23 @@ import {
   Folder,
   FolderOpen,
   HardDrive,
+  Loader2,
   RefreshCw,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ApiError,
   getStorage,
+  getStorageDownloadUrl,
+  getStorageFile,
   type StorageEntry,
+  type StorageFileResponse,
   type StorageResponse,
 } from "@/lib/api";
 import {
@@ -83,6 +91,11 @@ export function StorageInspector({ online }: StorageInspectorProps) {
   const [data, setData] = useState<StorageResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewPath, setPreviewPath] = useState<string | null>(null);
+  const [preview, setPreview] = useState<StorageFileResponse | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const fetchStorage = async (nextPath: string, nextDepth: number) => {
     setLoading(true);
@@ -122,6 +135,52 @@ export function StorageInspector({ online }: StorageInspectorProps) {
     void fetchStorage(path, nextDepth);
   };
 
+  const openFile = async (entry: StorageEntry) => {
+    setPreviewPath(entry.path);
+    setPreview(null);
+    setPreviewError(null);
+    setCopied(false);
+    setPreviewLoading(true);
+    try {
+      setPreview(await getStorageFile(entry.path));
+    } catch (err) {
+      setPreviewError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : "Could not read this file.",
+      );
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closePreview = useCallback(() => {
+    setPreviewPath(null);
+    setPreview(null);
+    setPreviewError(null);
+    setCopied(false);
+  }, []);
+
+  const copyPreview = async () => {
+    if (!preview || preview.binary) return;
+    try {
+      await navigator.clipboard.writeText(preview.content);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setPreviewError("Could not copy the file contents to the clipboard.");
+    }
+  };
+
+  useEffect(() => {
+    if (!previewPath) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closePreview();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewPath, closePreview]);
+
   const activePath = data?.path ?? path;
   const segments = activePath.split("/").filter(Boolean);
   const crumbs = [
@@ -141,10 +200,12 @@ export function StorageInspector({ online }: StorageInspectorProps) {
       <PageHeader
         eyebrow="Filesystem"
         title="Physical Storage Inspector"
-        description="Inspect the real files behind the lakehouse: Parquet data files, Delta transaction logs, and Iceberg manifests and metadata JSON."
+        description="Inspect the real files behind the lakehouse: Parquet data files, Delta transaction logs, and Iceberg manifests and metadata JSON. Click any file to preview its text contents."
         actions={
           <>
-            <Badge variant="outline">read-only</Badge>
+            <Badge variant="outline" className="text-[13px]">
+              read-only
+            </Badge>
             <Button
               variant="outline"
               size="sm"
@@ -160,7 +221,7 @@ export function StorageInspector({ online }: StorageInspectorProps) {
 
       {!online ? (
         <Card className="border-amber-500/30 bg-amber-500/5 p-4">
-          <div className="flex items-center gap-2 text-xs text-amber-300">
+          <div className="flex items-center gap-2 text-sm text-amber-300">
             <AlertCircle className="size-4" />
             The backend is offline. Start the FastAPI server to inspect the
             warehouse directory.
@@ -168,18 +229,18 @@ export function StorageInspector({ online }: StorageInspectorProps) {
         </Card>
       ) : null}
 
-      <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-card/50 px-3 py-2 text-xs">
+      <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-card/50 px-3 py-2 text-sm">
         <HardDrive className="size-3.5 shrink-0 text-primary" />
         <span className="hidden text-muted-foreground sm:inline">
           Warehouse root
         </span>
         <code
-          className="min-w-0 flex-1 truncate font-mono text-[11px] text-foreground/80"
+          className="min-w-0 flex-1 truncate font-mono text-[13px] text-foreground/80"
           title={data?.root}
         >
           {data?.root ?? "—"}
         </code>
-        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[12px] text-muted-foreground">
           /{activePath}
         </span>
       </div>
@@ -210,18 +271,19 @@ export function StorageInspector({ online }: StorageInspectorProps) {
                 <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
                   <Database className="size-4" />
                 </div>
-                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground">
                   File types
                 </p>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {categories.length === 0 ? (
-                  <span className="text-xs text-muted-foreground">—</span>
+                  <span className="text-sm text-muted-foreground">—</span>
                 ) : (
                   categories.slice(0, 5).map(([category, summary]) => (
                     <Badge
                       key={category}
                       variant={CATEGORY_BADGE[category] ?? "outline"}
+                      className="text-[13px]"
                     >
                       {category} · {summary.files}
                     </Badge>
@@ -238,10 +300,10 @@ export function StorageInspector({ online }: StorageInspectorProps) {
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-400" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-red-400">
+              <p className="text-sm font-semibold text-red-400">
                 Storage scan failed
               </p>
-              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] text-red-200/80">
+              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[13px] text-red-200/80">
                 {error}
               </pre>
             </div>
@@ -259,7 +321,7 @@ export function StorageInspector({ online }: StorageInspectorProps) {
       ) : null}
 
       {data?.summary.truncated ? (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-300">
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[13px] text-amber-300">
           <AlertCircle className="size-3.5" />
           The directory contains more entries than the scan limit; increase the
           depth or narrow the path for a complete view.
@@ -268,7 +330,7 @@ export function StorageInspector({ online }: StorageInspectorProps) {
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 border-b border-border/70 px-4 py-3">
-          <nav className="flex min-w-0 flex-wrap items-center gap-1 text-[11px]">
+          <nav className="flex min-w-0 flex-wrap items-center gap-1 text-[13px]">
             {crumbs.map((crumb, index) => (
               <span key={crumb.path || "root"} className="flex items-center gap-1">
                 {index > 0 ? (
@@ -302,12 +364,12 @@ export function StorageInspector({ online }: StorageInspectorProps) {
               <ArrowUp />
               Up
             </Button>
-            <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <label className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
               Depth
               <select
                 value={depth}
                 onChange={(event) => changeDepth(Number(event.target.value))}
-                className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+                className="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
               >
                 {[1, 2, 3, 4, 5, 6].map((value) => (
                   <option key={value} value={value}>
@@ -347,8 +409,8 @@ export function StorageInspector({ online }: StorageInspectorProps) {
                 <div className="grid size-11 place-items-center rounded-2xl bg-muted/60 text-muted-foreground">
                   <FolderOpen className="size-5" />
                 </div>
-                <p className="text-sm font-medium">This directory is empty</p>
-                <p className="max-w-md text-xs text-muted-foreground">
+                <p className="text-base font-medium">This directory is empty</p>
+                <p className="max-w-md text-sm text-muted-foreground">
                   Create a Delta or Iceberg table, or seed the demo data with{" "}
                   <code className="font-mono text-primary">
                     python seed_demo.py
@@ -363,6 +425,7 @@ export function StorageInspector({ online }: StorageInspectorProps) {
                   node={child}
                   depth={0}
                   onNavigate={navigate}
+                  onOpenFile={openFile}
                 />
               ))
             )}
@@ -370,11 +433,125 @@ export function StorageInspector({ online }: StorageInspectorProps) {
         ) : null}
       </Card>
 
-      <p className="px-1 text-[10px] text-muted-foreground/60">
+      <p className="px-1 text-[12px] text-muted-foreground/60">
         Showing <span className="font-mono">/{activePath || ""}</span> ·{" "}
         {data ? shortPath(data.root, 90) : "local filesystem"} · entry limit{" "}
         {formatNumber(data?.summary.max_entries ?? 2000)}
       </p>
+
+      {previewPath ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          role="presentation"
+          onClick={closePreview}
+        >
+          <Card
+            className="flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Preview ${preview?.name ?? previewPath}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 border-b border-border/70 px-4 py-3">
+              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                <FileJson className="size-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-mono text-sm font-medium">
+                  {preview?.name ?? previewPath.split("/").pop()}
+                </p>
+                <p
+                  className="truncate font-mono text-[12px] text-muted-foreground"
+                  title={`/${previewPath}`}
+                >
+                  /{previewPath}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {preview ? (
+                  <>
+                    <Badge variant="outline" className="text-[13px]">
+                      {formatBytes(preview.size)}
+                    </Badge>
+                    {preview.binary ? (
+                      <Badge variant="warning" className="text-[13px]">
+                        binary
+                      </Badge>
+                    ) : (
+                      <Badge variant="info" className="text-[13px]">
+                        {preview.language}
+                      </Badge>
+                    )}
+                    <a
+                      href={getStorageDownloadUrl(preview.path)}
+                      download={preview.name}
+                      className={buttonVariants({ size: "sm" })}
+                      title={`Download ${preview.name} to this computer`}
+                    >
+                      <Download />
+                      Download
+                    </a>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void copyPreview()}
+                      disabled={preview.binary}
+                    >
+                      {copied ? <Check /> : <Copy />}
+                      {copied ? "Copied" : "Copy"}
+                    </Button>
+                  </>
+                ) : null}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={closePreview}
+                  title="Close preview"
+                >
+                  <X />
+                </Button>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-auto bg-muted/10 p-4">
+              {previewLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Loading file…
+                </div>
+              ) : previewError ? (
+                <div className="flex items-start gap-2 text-sm text-red-400">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <pre className="whitespace-pre-wrap break-words font-mono text-[13px]">
+                    {previewError}
+                  </pre>
+                </div>
+              ) : preview?.binary ? (
+                <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+                  <FileArchive className="size-6 text-muted-foreground" />
+                  <p className="text-base font-medium">Binary file</p>
+                  <p className="max-w-md text-sm text-muted-foreground">
+                    This file is not UTF-8 text, so it cannot be shown in the
+                    preview. Use the name, size and modified date above to
+                    identify it.
+                  </p>
+                </div>
+              ) : preview ? (
+                <pre className="whitespace-pre-wrap break-words font-mono text-[13px] leading-5 text-foreground/90">
+                  {preview.content || "(empty file)"}
+                </pre>
+              ) : null}
+            </div>
+
+            {preview?.truncated ? (
+              <div className="border-t border-amber-500/30 bg-amber-500/5 px-4 py-2 text-[12px] text-amber-300">
+                Preview limited to the first {formatBytes(preview.max_bytes)} of{" "}
+                {formatBytes(preview.size)}.
+              </div>
+            ) : null}
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -397,11 +574,11 @@ function StatCard({
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground">
             {label}
           </p>
-          <p className="truncate text-lg font-semibold tabular-nums">{value}</p>
-          <p className="truncate text-[10px] text-muted-foreground/70">
+          <p className="truncate text-xl font-semibold tabular-nums">{value}</p>
+          <p className="truncate text-[12px] text-muted-foreground/70">
             {detail}
           </p>
         </div>
@@ -414,9 +591,15 @@ interface StorageNodeProps {
   node: StorageEntry;
   depth: number;
   onNavigate: (path: string) => void;
+  onOpenFile: (node: StorageEntry) => void;
 }
 
-function StorageNode({ node, depth, onNavigate }: StorageNodeProps) {
+function StorageNode({
+  node,
+  depth,
+  onNavigate,
+  onOpenFile,
+}: StorageNodeProps) {
   const [open, setOpen] = useState(depth < 1);
 
   if (node.type === "directory") {
@@ -443,18 +626,20 @@ function StorageNode({ node, depth, onNavigate }: StorageNodeProps) {
           <button
             type="button"
             onClick={() => onNavigate(node.path)}
-            className="min-w-0 flex-1 truncate text-left font-mono text-xs hover:text-primary"
+            className="min-w-0 flex-1 truncate text-left font-mono text-sm hover:text-primary"
             title={`Open /${node.path}`}
           >
             {node.name}
           </button>
           {node.truncated ? (
-            <Badge variant="warning">partial</Badge>
+            <Badge variant="warning" className="text-[13px]">
+              partial
+            </Badge>
           ) : null}
-          <span className="w-16 shrink-0 text-right font-mono text-[10.5px] tabular-nums text-muted-foreground">
+          <span className="w-20 shrink-0 text-right font-mono text-[12.5px] tabular-nums text-muted-foreground">
             {node.size > 0 ? formatBytes(node.size) : "—"}
           </span>
-          <span className="hidden w-32 shrink-0 text-right text-[10px] text-muted-foreground/70 md:block">
+          <span className="hidden w-36 shrink-0 text-right text-[12px] text-muted-foreground/70 md:block">
             {formatDate(node.modified)}
           </span>
         </div>
@@ -468,11 +653,12 @@ function StorageNode({ node, depth, onNavigate }: StorageNodeProps) {
                   node={child}
                   depth={depth + 1}
                   onNavigate={onNavigate}
+                  onOpenFile={onOpenFile}
                 />
               ))}
             </div>
           ) : (
-            <p className="ml-12 py-1 text-[10px] italic text-muted-foreground/60">
+            <p className="ml-12 py-1 text-[12px] italic text-muted-foreground/60">
               empty directory
             </p>
           )
@@ -483,7 +669,12 @@ function StorageNode({ node, depth, onNavigate }: StorageNodeProps) {
 
   const Icon = fileIcon(node.category);
   return (
-    <div className="group flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/40">
+    <button
+      type="button"
+      onClick={() => onOpenFile(node)}
+      className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted/40"
+      title={`Preview /${node.path}`}
+    >
       <span className="size-5 shrink-0" />
       <Icon
         className={cn(
@@ -492,23 +683,23 @@ function StorageNode({ node, depth, onNavigate }: StorageNodeProps) {
         )}
       />
       <span
-        className="min-w-0 flex-1 truncate font-mono text-xs"
+        className="min-w-0 flex-1 truncate font-mono text-sm group-hover:text-primary"
         title={node.path}
       >
         {node.name}
       </span>
       <Badge
         variant={CATEGORY_BADGE[node.category ?? ""] ?? "outline"}
-        className="hidden shrink-0 sm:inline-flex"
+        className="hidden shrink-0 text-[13px] sm:inline-flex"
       >
         {node.category}
       </Badge>
-      <span className="w-16 shrink-0 text-right font-mono text-[10.5px] tabular-nums text-muted-foreground">
+      <span className="w-20 shrink-0 text-right font-mono text-[12.5px] tabular-nums text-muted-foreground">
         {formatBytes(node.size)}
       </span>
-      <span className="hidden w-32 shrink-0 text-right text-[10px] text-muted-foreground/70 md:block">
+      <span className="hidden w-36 shrink-0 text-right text-[12px] text-muted-foreground/70 md:block">
         {formatDate(node.modified)}
       </span>
-    </div>
+    </button>
   );
 }

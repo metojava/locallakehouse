@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Settings2 } from "lucide-react";
 
 import { EDITOR_THEMES, useEditorPrefs } from "@/lib/editor-prefs";
+import { cn } from "@/lib/utils";
 
 interface CodeEditorProps {
   value: string;
@@ -167,7 +168,10 @@ export function CodeEditor({
         <div
           ref={gutterRef}
           aria-hidden="true"
-          className="no-scrollbar h-full w-14 shrink-0 select-none overflow-hidden border-r border-border/60 bg-muted/15 py-4 text-right font-mono leading-6 text-muted-foreground/40"
+          className={cn(
+            "no-scrollbar h-full w-14 shrink-0 select-none overflow-hidden border-r border-border/60 bg-muted/15 py-4 text-right font-mono leading-6",
+            theme === "dark" ? "text-white" : "text-muted-foreground/40",
+          )}
           style={{ fontSize }}
         >
           {Array.from({ length: lineCount }, (_, index) => (

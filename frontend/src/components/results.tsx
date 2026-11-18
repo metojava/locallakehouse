@@ -109,8 +109,8 @@ function ErrorState({ message }: { message: string }) {
             <AlertCircle className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-red-400">Query failed</p>
-            <pre className="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-destructive/20 bg-destructive/5 p-3 font-mono text-[11.5px] leading-5 text-red-200/90">
+            <p className="text-base font-semibold text-red-400">Query failed</p>
+            <pre className="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-destructive/20 bg-destructive/5 p-3 font-mono text-[13.5px] leading-5 text-red-200/90">
               {message}
             </pre>
           </div>
@@ -261,10 +261,10 @@ function ResultCard({
 
         {hasOutput ? (
           <TabsContent value="output" className="m-0">
-            <div className="max-h-[55vh] overflow-auto bg-muted/10 p-5 font-mono text-xs leading-6 text-foreground/90">
+            <div className="max-h-[55vh] overflow-auto bg-muted/10 p-5 font-mono text-sm leading-6 text-foreground/90">
               {resultRepr ? (
                 <div className="mb-4 border-b border-border/40 pb-4">
-                  <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span className="mb-1 block text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Returned value
                   </span>
                   <code className="block whitespace-pre-wrap break-words text-emerald-300">
@@ -292,7 +292,7 @@ function ResultCard({
           />
         </TabsContent>
         <TabsContent value="json" className="m-0">
-          <pre className="max-h-[55vh] overflow-auto bg-muted/10 p-5 font-mono text-xs leading-6 text-foreground/90">
+          <pre className="max-h-[55vh] overflow-auto bg-muted/10 p-5 font-mono text-sm leading-6 text-foreground/90">
             {JSON.stringify(result.rows, null, 2)}
           </pre>
         </TabsContent>
@@ -331,9 +331,9 @@ export function ResultsGrid({ columns, rows, statementType }: ResultsGridProps) 
 
   return (
     <div className="max-h-[55vh] overflow-auto">
-      <table className="w-full min-w-max border-collapse text-left text-[13px]">
+      <table className="w-full min-w-max border-collapse text-left text-[15px]">
         <thead>
-          <tr className="border-b border-border/70 bg-muted text-[11px] uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border/70 bg-muted text-[13px] uppercase tracking-wide text-muted-foreground">
             <th className="sticky left-0 top-0 z-30 w-12 border-r border-border/60 bg-muted px-3 py-2 text-right font-medium">
               #
             </th>
@@ -343,7 +343,7 @@ export function ResultsGrid({ columns, rows, statementType }: ResultsGridProps) 
                 className="sticky top-0 z-20 whitespace-nowrap border-b border-border/60 bg-muted px-3 py-2 font-medium"
               >
                 <span className="block text-foreground/90">{column.name}</span>
-                <span className="block font-mono text-[9.5px] font-normal normal-case text-muted-foreground/70">
+                <span className="block font-mono text-[11.5px] font-normal normal-case text-muted-foreground/70">
                   {column.type}
                 </span>
               </th>
@@ -356,7 +356,7 @@ export function ResultsGrid({ columns, rows, statementType }: ResultsGridProps) 
               key={rowIndex}
               className="group border-b border-border/40 transition-colors hover:bg-muted/30"
             >
-              <td className="sticky left-0 z-10 border-r border-border/40 bg-card px-3 py-2 text-right font-mono text-[10px] text-muted-foreground/60 group-hover:bg-muted">
+              <td className="sticky left-0 z-10 border-r border-border/40 bg-card px-3 py-2 text-right font-mono text-[12px] text-white group-hover:bg-muted">
                 {rowIndex + 1}
               </td>
               {columns.map((column) => {
@@ -376,7 +376,7 @@ export function ResultsGrid({ columns, rows, statementType }: ResultsGridProps) 
                     <span
                       title={text}
                       className={cn(
-                        "block max-w-[360px] truncate font-mono text-[12px]",
+                        "block max-w-[360px] truncate font-mono text-[14px]",
                         isNull && "italic text-muted-foreground/50",
                         isObject && "text-sky-300",
                         typeof value === "boolean" && "text-violet-300",

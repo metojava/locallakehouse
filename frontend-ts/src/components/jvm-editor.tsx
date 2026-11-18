@@ -1,4 +1,13 @@
-import { AlertTriangle, Clock, Loader2, Play, RotateCcw, Sparkles, Terminal } from "lucide-react";
+import {
+  AlertTriangle,
+  Clock,
+  Loader2,
+  Play,
+  RotateCcw,
+  Sparkles,
+  Square,
+  Terminal,
+} from "lucide-react";
 
 import { BufferTabs } from "@/components/buffer-tabs";
 import { CodeEditor } from "@/components/code-editor";
@@ -17,6 +26,7 @@ interface JvmEditorProps {
   source: string;
   onSourceChange: (source: string) => void;
   onRun: () => void;
+  onStop: () => void;
   running: boolean;
   result: JvmRunResponse | null;
   error: string | null;
@@ -54,12 +64,12 @@ function OutputBlock({
   if (!text.trim()) return null;
   return (
     <div className="space-y-1">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+      <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
         {label}
       </p>
       <pre
         className={cn(
-          "max-h-[360px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/60 bg-muted/30 p-3 font-mono text-[11.5px] leading-5 text-foreground/90",
+          "max-h-[360px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/60 bg-muted/30 p-3 font-mono text-[13.5px] leading-5 text-foreground/90",
           tone === "error" && "border-destructive/30 text-red-300",
         )}
       >
@@ -75,6 +85,7 @@ export function JvmEditor({
   source,
   onSourceChange,
   onRun,
+  onStop,
   running,
   result,
   error,
@@ -126,6 +137,17 @@ export function JvmEditor({
               {running ? <Loader2 className="animate-spin" /> : <Play />}
               {running ? "Running…" : "Run program"}
             </Button>
+            {running ? (
+              <Button
+                variant="destructive"
+                onClick={onStop}
+                className="shadow-lg shadow-destructive/20"
+                title="Cancel the running program"
+              >
+                <Square className="fill-current" />
+                Stop
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -175,7 +197,7 @@ export function JvmEditor({
         </div>
 
         {error ? (
-          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-red-300">
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-base text-red-300">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <span className="whitespace-pre-wrap">{error}</span>
           </div>
@@ -185,7 +207,7 @@ export function JvmEditor({
           <Card>
             <CardContent className="space-y-4 p-4">
               {result.compile_ok ? null : (
-                <div className="flex items-center gap-2 text-xs font-medium text-red-300">
+                <div className="flex items-center gap-2 text-sm font-medium text-red-300">
                   <AlertTriangle className="size-3.5" />
                   Compilation failed. The program was not run.
                 </div>

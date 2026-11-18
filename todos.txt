@@ -1,0 +1,19 @@
+﻿[1] [completed] Scaffold repository layout and configuration (backend/frontend/scripts/data_warehouse)
+[2] [completed] Backend: config, Spark session factory (Delta + Iceberg), SQL engine
+[3] [completed] Backend: catalog + physical storage services and FastAPI routes/models
+[4] [completed] Frontend: Vite/TS/Tailwind/Shadcn setup and API client
+[5] [completed] Frontend: workbench UI (sidebar, SQL editor/results, schema, storage)
+[6] [completed] Seed script, README, launch scripts, .gitignore
+[7] [completed] Verify builds/tests and finalize todos
+[8] [completed] Fix Iceberg extension class name (IcebergSparkSessionExtensions)
+[9] [completed] Add embedded Derby Hive metastore so Delta tables persist across restarts
+[10] [completed] End-to-end verification: smoke test, seed (4+4 rows), live API SQL/catalog/storage/error paths
+[11] [completed] Add Windows .bat wrappers for backend/frontend/start-all PowerShell scripts
+[12] [completed] Import CSV/JSON/Parquet/TXT/ORC/Avro files into Delta/Iceberg/Spark tables
+[13] [completed] Add PySpark script execution endpoint and UI
+[14] [completed] Add editor font size, background, and text color controls
+[15] [completed] Add JDBC database connections with saved connections and config file
+[16] [completed] Add Databases page to browse remote tables and import to lakehouse
+[17] [completed] Create frontend-ts TypeScript copy of the frontend
+[18] [completed] Write multi-page online book in HTML and Markdown
+[19] [completed] Write getting-started.html and getting-started.md for startups

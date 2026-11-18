@@ -194,6 +194,7 @@ export function WorkspacePage({ online }: { online: boolean }) {
   const [savedNotebook, setSavedNotebook] = useState("");
   const [savingNotebook, setSavingNotebook] = useState(false);
   const [creatingNotebook, setCreatingNotebook] = useState(false);
+  const [notebookFullWidth, setNotebookFullWidth] = useState(false);
 
   const textDirty = activePath !== null && notebook === null && textContent !== savedText;
   const notebookDirty = useMemo(
@@ -242,6 +243,7 @@ export function WorkspacePage({ online }: { online: boolean }) {
 
   const resetFileState = useCallback(() => {
     setNotebook(null);
+    setNotebookFullWidth(false);
     setTextContent("");
     setSavedText("");
     setTextName("");
@@ -264,6 +266,7 @@ export function WorkspacePage({ online }: { online: boolean }) {
           setNotebook(doc);
           setSavedNotebook(serializeNotebook(doc));
           setActivePath(doc.path);
+          setNotebookFullWidth(true);
         } else {
           const file = await getWorkspaceFile(entry.path);
           setTextName(file.name);
@@ -271,6 +274,7 @@ export function WorkspacePage({ online }: { online: boolean }) {
           setTextContent(file.content);
           setSavedText(file.content);
           setActivePath(file.path);
+          setNotebookFullWidth(false);
         }
       } catch (err) {
         setError(toErrorMessage(err));
@@ -340,6 +344,7 @@ export function WorkspacePage({ online }: { online: boolean }) {
       setNotebook(doc);
       setSavedNotebook(serializeNotebook(doc));
       setActivePath(doc.path);
+      setNotebookFullWidth(true);
       setNotice(`Created ${doc.name}`);
       void refresh();
     } catch (err) {
@@ -389,6 +394,8 @@ export function WorkspacePage({ online }: { online: boolean }) {
     walk(workspace?.tree ?? []);
     return count;
   }, [workspace]);
+
+  const notebookExpanded = notebook !== null && notebookFullWidth;
 
   return (
     <div className="animate-fade-in space-y-5">
@@ -518,59 +525,67 @@ export function WorkspacePage({ online }: { online: boolean }) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-          <Card className="overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
-              <FolderOpen className="size-4 text-primary" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {workspace.name ?? "Workspace"}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {totalFiles} file{totalFiles === 1 ? "" : "s"}
-                  {workspace.truncated ? " · truncated" : ""}
+        <div
+          className={cn(
+            notebookExpanded
+              ? "space-y-4"
+              : "grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]",
+          )}
+        >
+          {notebookExpanded ? null : (
+            <Card className="overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
+                <FolderOpen className="size-4 text-primary" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {workspace.name ?? "Workspace"}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {totalFiles} file{totalFiles === 1 ? "" : "s"}
+                    {workspace.truncated ? " · truncated" : ""}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="size-7 shrink-0 p-0"
+                  onClick={() => void createNotebook()}
+                  disabled={creatingNotebook || busy !== null}
+                  title="New notebook"
+                >
+                  {creatingNotebook ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <FilePlus />
+                  )}
+                </Button>
+              </div>
+              <div className="max-h-[68vh] overflow-auto p-2">
+                {workspace.tree.length === 0 ? (
+                  <p className="px-2 py-4 text-xs text-muted-foreground">
+                    No supported files found in this folder.
+                  </p>
+                ) : (
+                  workspace.tree.map((entry) => (
+                    <EntryNode
+                      key={entry.path}
+                      entry={entry}
+                      depth={0}
+                      expanded={expanded}
+                      activePath={activePath}
+                      onToggle={toggleDirectory}
+                      onSelect={(item) => void openEntry(item)}
+                    />
+                  ))
+                )}
+              </div>
+              <div className="border-t border-border/60 px-4 py-2">
+                <p className="truncate font-mono text-[10px] text-muted-foreground/70" title={workspace.root}>
+                  {workspace.root}
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="size-7 shrink-0 p-0"
-                onClick={() => void createNotebook()}
-                disabled={creatingNotebook || busy !== null}
-                title="New notebook"
-              >
-                {creatingNotebook ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <FilePlus />
-                )}
-              </Button>
-            </div>
-            <div className="max-h-[68vh] overflow-auto p-2">
-              {workspace.tree.length === 0 ? (
-                <p className="px-2 py-4 text-xs text-muted-foreground">
-                  No supported files found in this folder.
-                </p>
-              ) : (
-                workspace.tree.map((entry) => (
-                  <EntryNode
-                    key={entry.path}
-                    entry={entry}
-                    depth={0}
-                    expanded={expanded}
-                    activePath={activePath}
-                    onToggle={toggleDirectory}
-                    onSelect={(item) => void openEntry(item)}
-                  />
-                ))
-              )}
-            </div>
-            <div className="border-t border-border/60 px-4 py-2">
-              <p className="truncate font-mono text-[10px] text-muted-foreground/70" title={workspace.root}>
-                {workspace.root}
-              </p>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           <div className="min-w-0">
             {fileLoading ? (
@@ -589,6 +604,8 @@ export function WorkspacePage({ online }: { online: boolean }) {
                 saving={savingNotebook}
                 dirty={notebookDirty}
                 online={online}
+                fullWidth={notebookExpanded}
+                onToggleFullWidth={() => setNotebookFullWidth((prev) => !prev)}
               />
             ) : activePath ? (
               <Card className="overflow-hidden">

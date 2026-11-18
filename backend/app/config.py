@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import shutil
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional, Tuple
@@ -77,6 +80,8 @@ class Settings(BaseSettings):
     query_timeout_seconds: int = 300
     storage_max_entries: int = 5_000
     storage_max_depth: int = 6
+    # Maximum number of bytes returned when previewing a warehouse file.
+    storage_preview_max_bytes: int = 2 * 1024 * 1024
 
     @property
     def connections_file(self) -> Path:
@@ -120,3 +125,35 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()
+
+
+def _is_python_executable(value: str) -> bool:
+    if os.path.isabs(value):
+        return os.path.isfile(value)
+    return shutil.which(value) is not None
+
+
+def ensure_pyspark_python() -> str:
+    """Make Spark's Python workers use the interpreter running the backend.
+
+    PySpark falls back to the literal command ``python3``. That name does not
+    exist on a default Windows installation, so RDD/UDF work fails with
+    ``java.io.IOException: Cannot run program "python3"``. Pointing the setting
+    at ``sys.executable`` also guarantees workers run inside the backend
+    virtualenv and can import the same packages.
+
+    Called at import time so both the in-process Spark session and
+    ``spark-submit`` child processes (Java/Scala runs) inherit the value.
+    """
+
+    configured = os.environ.get("PYSPARK_PYTHON")
+    if not configured or not _is_python_executable(configured):
+        configured = sys.executable
+    os.environ["PYSPARK_PYTHON"] = configured
+    # Only used by the PySpark shells; keep an explicit user choice (e.g.
+    # ipython) but provide a working default for child processes.
+    os.environ.setdefault("PYSPARK_DRIVER_PYTHON", configured)
+    return configured
+
+
+ensure_pyspark_python()

@@ -53,10 +53,10 @@ No cloud account, no external catalog service, no cluster required.
 | **PySpark Editor** | Run PySpark scripts against the shared `spark` session. A returned or last assigned DataFrame is previewed. Editor tabs as above. |
 | **Java / Scala Editors** | Compile and run a `Main` class (Java with `javac`, Scala with the bundled Scala 2.13 compiler) as a Spark job. Each run is a separate JVM. See [Java and Scala programs](#java-and-scala-programs). |
 | **Workspace** | Open any folder on the backend machine, browse it, edit text files, and create new notebooks (**New notebook**). |
-| **Notebooks** | Jupyter-style `.ipynb` notebooks with code and markdown cells, **Run all**, cell outputs, a per-notebook **kernel** (PySpark built-in, Java, or Scala), **Data source** loading, and save back to `.ipynb`. See [Notebooks](#notebooks). |
+| **Notebooks** | Jupyter-style `.ipynb` notebooks with code and markdown cells, **Run all**, cell outputs, a per-notebook **kernel** (PySpark built-in, SQL built-in, Java, or Scala), **Data source** loading, and save back to `.ipynb`. See [Notebooks](#notebooks). |
 | **Databases** | Browse `databases.cfg` connections, list databases and tables, import tables into Delta/Iceberg/Spark, and open an imported table in the SQL editor. Saved connections can also be created in the UI. |
 | **Schema Explorer** | Browse Delta and Iceberg namespaces and tables; click a table to query it. |
-| **Storage Inspector** | Read-only tree of the warehouse folders with sizes and file counts. |
+| **Storage Inspector** | Read-only tree of the warehouse folders with sizes and file counts; click a file (Delta log, Iceberg metadata JSON, CSV, log, Parquet) to preview text contents or download it to your computer. |
 | **Spark Settings** | See the active Spark installation, choose a compatible local Spark folder, or download one. |
 | **Appearance** | A fixed top bar sets the font size and dark/light theme for code editors and notebooks. |
 
@@ -72,7 +72,7 @@ warehouse/
 │  │  │  ├─ sql_engine.py           # Spark SQL execution, timeout, result materialisation
 │  │  │  ├─ pyspark_engine.py       # PySpark cells/scripts; notebook namespaces; read_data_file / read_database helpers
 │  │  │  ├─ jvm_runner.py           # Java/Scala compile + spark-submit runner
-│  │  │  ├─ kernel_service.py       # Jupyter kernels for notebooks (IJava, almond); Java kernel installer
+│  │  │  ├─ kernel_service.py       # Jupyter kernels for notebooks (IJava, almond); Java/Scala installers
 │  │  │  ├─ workspace.py            # Workspace folder tree, text files, notebook load/create
 │  │  │  ├─ folder_picker.py        # Native folder/file pickers on the backend machine
 │  │  │  ├─ importer.py             # CSV/JSON/Parquet/TXT/ORC/Avro → Delta/Iceberg/Spark
@@ -121,7 +121,7 @@ warehouse/
 ## Prerequisites
 
 - **Python 3.11+** (the start scripts check for it)
-- **Java 17+** to 21  — `JAVA_HOME` set and `java -version` on PATH. The Java and Scala editors and kernels use the same JDK.
+- **Java 17+** — `JAVA_HOME` set and `java -version` on PATH. The Java and Scala editors and kernels use the same JDK.
 - **Node.js 20+** and npm
 - **Internet access on first Spark startup** to download the Delta/Iceberg jars from Maven Central (Maven coordinates are in `backend/app/config.py`)
 - **Windows only:** Hadoop `winutils.exe` + `hadoop.dll`, with `HADOOP_HOME` pointed at the Hadoop directory (see [Windows setup](#windows-setup))
@@ -129,16 +129,13 @@ warehouse/
 
 ## Quick start
 
-to run double click:  scripts\start-all.bat
-
-
 From the repository root:
 
 ```powershell
 # Terminal 1 — FastAPI + Spark (creates .venv and installs deps on first run)
 powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 
-# Terminal 2 — React UI   || in this fole change frontend to frontend-ts to run typescript version ... 
+# Terminal 2 — React UI
 powershell -ExecutionPolicy Bypass -File .\scripts\start-frontend.ps1
 ```
 
@@ -264,9 +261,18 @@ Open a notebook from the Workspace explorer.
 - **Cells:** add **Code** and **Markdown** cells. Run one cell with its run button, or all code cells with **Run all**. Variables persist between cells of the same notebook.
 - **Kernel:** the **Kernel** dropdown in the header chooses the language for the notebook:
   - **Python 3 (PySpark built-in)** — the default. Runs in the backend's PySpark session, with `spark` bound.
+  - **SQL (Spark SQL built-in)** — runs each code cell as Spark SQL against the same backend session. A cell may contain several statements separated by `;`; the last row-returning statement is shown in the result grid, and DDL/DML statements are executed immediately.
   - **Java** and **Scala** — kernels installed on your machine (see [Java and Scala notebook kernels](#java-and-scala-notebook-kernels)). Each notebook keeps its own kernel process, so variables persist between its cells. The Java kernel is not connected to the PySpark session.
   - A notebook whose kernel is not installed shows “(not installed)” in the dropdown; cells fail with a clear message until you install it or pick another kernel.
-- **Reset kernel** clears the variables and stops the non-Python kernels of this notebook.
+- **SQL from a Python notebook:** a cell whose first non-empty line is `%sql` or `%%sql` runs as Spark SQL, so you can mix Python and SQL in one notebook:
+
+  ```sql
+  %sql
+  SELECT * FROM delta.default.my_table LIMIT 100
+  ```
+
+  Only the first non-empty line is inspected; other magics such as `%sqlite3` and ordinary Python cells are unaffected.
+- **Reset kernel** clears the variables and stops the non-Python kernels of this notebook. SQL tables and temp views live in the shared Spark session, so resetting does not drop them.
 - The kernel is saved in the notebook file (`metadata.kernelspec`), so Jupyter opens it with the same kernel name.
 - **Save** writes the notebook back to `.ipynb`. Outputs are not saved, only the cell sources and kernel.
 - Code cells use the font size and theme from the top bar.
@@ -308,9 +314,9 @@ The choices are saved in the browser.
 
 ## Java and Scala notebook kernels
 
-Notebooks run Python cells on the built-in PySpark engine. A notebook can also use a **Java** or **Scala** Jupyter kernel, selected in the notebook's **Kernel** dropdown. Kernels run in their own process and are started on the first cell.
+Notebooks run Python cells on the built-in PySpark engine and SQL cells on the built-in SQL kernel. A notebook can also use a **Java** or **Scala** Jupyter kernel, selected in the notebook's **Kernel** dropdown. Kernels run in their own process and are started on the first cell.
 
-Requirements for both kernels: a JDK 17+ on `PATH` or `JAVA_HOME`, and internet access for the first install and first start (dependencies are downloaded).
+Requirements for both kernels: a JDK 17+ on `PATH` or `JAVA_HOME`, and internet access for the first install and first start (dependencies are downloaded). The Scala installer also needs coursier; the backend downloads its launcher automatically when `cs` is not on `PATH`.
 
 The backend finds kernels that are installed in standard Jupyter locations. It also scans `%LOCALAPPDATA%\Programs\Python\Python*\share\jupyter\kernels` on Windows. Non-Python kernels such as the C++ kernels are listed too.
 
@@ -321,7 +327,11 @@ The backend finds kernels that are installed in standard Jupyter locations. It a
 - Windows: `%APPDATA%\jupyter\kernels\java`
 - Linux/macOS: `~/.local/share/jupyter/kernels/java`
 
-The message on the page confirms the location. Select **Java** in the Kernel dropdown.
+The message on the page confirms the location. Select **Java** in the Kernel dropdown. Java cells behave like Jupyter Java cells:
+
+```java
+System.out.println("hello from Java");
+```
 
 **Manual install (if the download is blocked or you prefer it):**
 
@@ -348,7 +358,18 @@ The message on the page confirms the location. Select **Java** in the Kernel dro
 
 ### Scala kernel (almond)
 
-The Scala kernel is [almond](https://almond.sh). The workbench does not install it; install it once with coursier:
+**From the UI:** open a notebook. If no Scala kernel is installed, the header shows **Install Scala kernel**. Click it. The backend runs the [almond](https://almond.sh) installer through coursier and registers the kernel in your user Jupyter folder:
+
+- Windows: `%APPDATA%\jupyter\kernels\scala`
+- Linux/macOS: `~/.local/share/jupyter/kernels/scala`
+
+The first install downloads almond and its dependencies, so it can take several minutes. The message on the page confirms the location. Select **Scala** in the Kernel dropdown. Scala cells behave like Jupyter Scala cells:
+
+```scala
+println("hello from Scala")
+```
+
+**Manual install (if the download is blocked or you prefer it):** install coursier and run the almond installer once:
 
 ```powershell
 # Windows (PowerShell, in an empty folder)
@@ -367,9 +388,42 @@ The installer registers a kernel named `scala`. Reload the workbench page and se
 
 ### Using Spark from Java or Scala notebooks
 
-A kernel does not start Spark by itself. Add the Spark dependencies in the first cell and create the session in your code, using the same version as the PySpark engine (Spark 4.1.x, Scala 2.13):
+A kernel does not start Spark by itself. The workbench adds the Spark jars bundled with PySpark to the **Java** kernel's classpath (the `IJAVA_CLASSPATH` environment variable), so Java cells can import Spark classes directly.
 
-- Java kernel: `%maven org.apache.spark:spark-sql_2.13:4.1.4`
+Java notebook cells are JShell **snippets**, not programs: write top-level statements and set the master explicitly, because a kernel (unlike `spark-submit` in the Java editor) has no master URL:
+
+```java
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+SparkSession spark = SparkSession.builder()
+    .master("local[*]")
+    .appName("java-nb")
+    .getOrCreate();
+
+Dataset<Row> df = spark.range(10).selectExpr("id", "id * id AS square");
+df.show();
+System.out.println("rows = " + df.count());
+```
+
+Do **not** wrap notebook code in `public class Main { public static void main(...) }`. That is the Java editor's structure: in the editor `spark-submit` runs the class, but in a notebook declaring the class only defines it and nothing calls `main`, so the cell completes with **no output**. Either convert the editor sample to the statements above, or keep the class and call it from a second cell (after adding `.master("local[*]")` to the builder):
+
+```java
+Main.main(new String[0]);
+```
+
+Other notebook notes:
+
+- Notebook imports persist between cells; you do not need to repeat them after a successful run.
+- `spark.stop()` ends the session for all later cells. Leave it out if you want to keep using `spark`.
+- Spark writes a lot of `INFO` logging to stderr. The table and printed values produced by the cell are at the end of the output.
+- Use **Reset kernel** after changing a class definition or when a previous run left a broken `SparkSession`/stale variables. If the Java kernel was already running before this classpath support was added, reset it (or restart the backend) so it starts with the new environment.
+
+Do **not** use `%maven org.apache.spark:spark-sql_2.13:4.1.4` in the Java kernel: IJava 1.3.0's Maven resolver cannot resolve the Spark 4.x dependency graph. The bundled Spark jars are already on the kernel classpath.
+
+For the **Scala** kernel, add the Spark dependency in the first cell and create the session in your code, using the same version as the PySpark engine (Spark 4.1.x, Scala 2.13):
+
 - Scala kernel: `import $ivy.\`org.apache.spark::spark-sql:4.1.4\``
 
 Delta and Iceberg tables are reached through the same catalog settings as in the Java/Scala editors (see [Java and Scala programs](#java-and-scala-programs)). The kernel session is separate from the backend session.
@@ -429,6 +483,8 @@ All paths are under `/api`. The interactive OpenAPI page is at `http://127.0.0.1
 | `GET` | `/api/database-config/connections/{id}/tables?database=` | List tables of a `databases.cfg` connection, optionally for one database. |
 | `GET` | `/api/tables?include_details=true` | Namespaces and tables for `delta` (`spark_catalog`) and `local_iceberg`. |
 | `GET` | `/api/storage-explorer?path=&depth=&max_entries=` | Read-only filesystem tree of `data_warehouse` (defaults from `LAKEHOUSE_STORAGE_MAX_DEPTH` and `LAKEHOUSE_STORAGE_MAX_ENTRIES`). |
+| `GET` | `/api/storage-explorer/file?path=` | Read-only text preview of a warehouse file; binary formats and paths outside `data_warehouse` are rejected. |
+| `GET` | `/api/storage-explorer/download?path=` | Download a warehouse file as an attachment (saved to the user's machine); paths outside `data_warehouse` are rejected. |
 | `GET` | `/api/spark/config` | Active/compatible Spark installation, PySpark version and detected releases. |
 | `POST` | `/api/spark/home` | Select a local Spark home (`{ "path": "..." }`); restarts the session. |
 | `DELETE` | `/api/spark/home` | Revert to the Spark bundled with PySpark. |
@@ -443,10 +499,11 @@ All paths are under `/api`. The interactive OpenAPI page is at `http://127.0.0.1
 | `GET` | `/api/workspace/notebook?path=` | Load a `.ipynb` file with its cells and kernel. |
 | `POST` | `/api/workspace/notebook` | Create an empty notebook: `{ "path": "name.ipynb" }` (returns 201). |
 | `POST` | `/api/files/pick` | Open a native file picker on the backend machine (used by Data source). |
-| `POST` | `/api/notebook/execute` | Run a notebook cell: `{ "notebook_id", "script", "kernel_name"?, "timeout_seconds"? }`. Without a non-Python `kernel_name` the cell runs on the PySpark kernel. |
+| `POST` | `/api/notebook/execute` | Run a notebook cell: `{ "notebook_id", "script", "kernel_name"?, "timeout_seconds"? }`. `kernel_name: "sql"` runs Spark SQL; otherwise the cell runs on the PySpark kernel (`%sql`/`%%sql` magics are also accepted there). |
 | `POST` | `/api/notebook/reset` | Clear a notebook's variables and stop its non-Python kernels: `{ "notebook_id" }`. |
-| `GET` | `/api/kernels` | Notebook kernels: the built-in PySpark kernel plus installed Java/Scala/other kernels. |
+| `GET` | `/api/kernels` | Notebook kernels: the built-in PySpark and SQL kernels plus installed Java/Scala/other kernels. |
 | `POST` | `/api/kernels/java/install` | Download and register the IJava Java kernel (no-op if a Java kernel exists). |
+| `POST` | `/api/kernels/scala/install` | Download and register the almond Scala kernel through coursier (no-op if a Scala kernel exists). |
 
 Example:
 
@@ -501,6 +558,7 @@ Copy `.env.example` to `.env` in the repository root (or set variables directly)
 | `LAKEHOUSE_QUERY_TIMEOUT_SECONDS` | `300` |
 | `LAKEHOUSE_STORAGE_MAX_ENTRIES` | `5000` |
 | `LAKEHOUSE_STORAGE_MAX_DEPTH` | `6` |
+| `LAKEHOUSE_STORAGE_PREVIEW_MAX_BYTES` | `2097152` (2 MB) |
 
 Frontend: `VITE_API_BASE_URL` (default `http://127.0.0.1:8000`). See `frontend/.env.example`.
 
@@ -593,6 +651,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 | --- | --- |
 | `Could not start Apache Spark` | Check Java 17+, `JAVA_HOME`, internet/proxy access to Maven Central, and the `spark.jars.packages` coordinates. |
 | `UnsatisfiedLinkError`, `winutils`, `NativeIO` on Windows | Set `HADOOP_HOME` and put `winutils.exe`/`hadoop.dll` in `%HADOOP_HOME%\bin`; restart the backend. |
+| `Cannot run program "python3"`, `CreateProcess error=2` on Windows | PySpark defaults its workers to `python3`, which Windows does not provide. The backend now points `PYSPARK_PYTHON` at its own interpreter automatically. If you run PySpark outside the provided scripts, set `PYSPARK_PYTHON` to `backend\.venv\Scripts\python.exe`. |
 | First query hangs 30–90s | Normal: Spark JVM startup + Ivy jar resolution. Watch backend logs. |
 | Java/Scala program takes 15–40 s | Normal: each run compiles and starts a new JVM (`spark-submit`). |
 | `ClassNotFoundException` for Delta/Iceberg | Versions must match the Spark minor version. Keep Delta 4.3.x + Iceberg 4.1 runtime with Spark 4.1.x. |
@@ -600,6 +659,11 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 | Notebook dropdown has no Java or Scala entry | Install the kernel (see [Java and Scala notebook kernels](#java-and-scala-notebook-kernels)), then reload the page. |
 | Notebook cell says “Kernel … is not installed” | The notebook was saved with a kernel that is missing here. Install it, or change the dropdown to Python. |
 | Java kernel does not start | Check `java -version` (JDK 17+ on PATH) and the kernel's `kernel.json` path. The first start can take a minute. |
+| Scala kernel install fails | Check the backend log and that Java 17+ is on PATH. The installer downloads coursier and almond from Maven Central, so it needs internet/proxy access. If a `scala` kernel already exists, the endpoint is a no-op; remove it with `jupyter kernelspec remove scala` to reinstall. |
+| Java notebook cell: `package org.apache.spark.sql does not exist` | The kernel started without the Spark jars. Restart the backend (which applies `IJAVA_CLASSPATH`) and click **Reset kernel**; see [Using Spark from Java or Scala notebooks](#using-spark-from-java-or-scala-notebooks). |
+| Java notebook cell runs but shows no output | Notebook cells are snippets: `public class Main { public static void main(...) }` only declares the class, and nothing calls `main`. Use top-level statements instead, or call `Main.main(new String[0])` in a second cell. |
+| `A master URL must be set in your configuration` in a notebook | Add `.master("local[*]")` to `SparkSession.builder()`; a kernel has no `spark-submit` master. |
+| `%maven` cannot resolve `spark-sql` in the Java kernel | IJava 1.3.0's resolver cannot resolve the Spark 4.x POMs. The Spark jars are already on the kernel classpath; remove the `%maven` cell. |
 | Port already in use | Change the Uvicorn port and set `VITE_API_BASE_URL`; add the UI origin to `LAKEHOUSE_CORS_ORIGINS` if it is not one of the default origins. |
 | UI shows “Backend offline” | Backend not running or CORS/origin mismatch. Check `http://127.0.0.1:8000/api/health`. |
 | Changed Spark config but nothing happens | Stop/restart the backend; `SparkSession` is created once per process. |

@@ -1,10 +1,10 @@
-l!DOCTYPE html>
-lhtml lang="en">
-lhead>
-  lmeta charset="UTF-8" />
-  lmeta name="viewport" content="width=device-width, initial-scale=1.0" />
-  ltitle>Big Data Transformation with Iceberg, Spark & Delta — Online Bookl/title>
-  lstyle>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Data Transformation with Iceberg, Spark & Delta — Online Book</title>
+  <style>
     :root {
       --bg: #0b1120;
       --panel: #111827;
@@ -43,61 +43,61 @@ lhead>
     }
     .btn.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
     footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
-  l/style>
-l/head>
-lbody>
-  ldiv class="container">
-    lheader>
-      lh1>Big Data Transformation with Iceberg, Spark &amp; Deltal/h1>
-      lp class="subtitle">A hands-on guide using the Open Lakehouse Workbenchl/p>
-    l/header>
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Big Data Transformation with Iceberg, Spark &amp; Delta</h1>
+      <p class="subtitle">A hands-on guide using the Open Lakehouse Workbench</p>
+    </header>
 
-    lp>
+    <p>
       This book teaches you how to load, transform, and manage large datasets using Apache Spark,
       Delta Lake, and Apache Iceberg — all from your own computer. The Open Lakehouse Workbench
       gives you a SQL editor, a PySpark runner, and a local catalog so you can experiment without
       cloud accounts or clusters.
-    l/p>
+    </p>
 
-    ldiv class="cta">
-      la class="btn" href="chapters/01-introduction.html">Start reading →l/a>
-      la class="btn secondary" href="index.md">Download Markdown versionl/a>
-      la class="btn secondary" href="../getting-started.html">Getting Started for Startupsl/a>
-    l/div>
+    <div class="cta">
+      <a class="btn" href="chapters/01-introduction.html">Start reading →</a>
+      <a class="btn secondary" href="index.md">Download Markdown version</a>
+      <a class="btn secondary" href="../getting-started.html">Getting Started for Startups</a>
+    </div>
 
-    lh2>Table of Contentsl/h2>
-    lnav class="toc">
-      lol>
-        lli>la class="chapter-link" href="chapters/01-introduction.html">Introductionl/a> — what the platform is and why it mattersl/li>
-        lli>la class="chapter-link" href="chapters/02-setup.html">Setup &amp; First Queryl/a> — install, launch, and run your first Spark SQLl/li>
-        lli>la class="chapter-link" href="chapters/03-spark-sql.html">Spark SQL Fundamentalsl/a> — SELECT, CREATE, INSERT, and time travell/li>
-        lli>la class="chapter-link" href="chapters/04-delta-lake.html">Delta Lake in Practicel/a> — ACID, upserts, and partitioningl/li>
-        lli>la class="chapter-link" href="chapters/05-apache-iceberg.html">Apache Iceberg in Practicel/a> — hidden partitioning, snapshots, and branchingl/li>
-        lli>la class="chapter-link" href="chapters/06-data-import.html">Importing Datal/a> — CSV, JSON, Parquet, TXT, ORC, Avro, and JDBC databasesl/li>
-        lli>la class="chapter-link" href="chapters/07-pyspark-transformations.html">PySpark Transformationsl/a> — DataFrame API, UDFs, and window functionsl/li>
-        lli>la class="chapter-link" href="chapters/08-real-world-project.html">Real-World Projectl/a> — build an end-to-end sales analytics pipelinel/li>
-      l/ol>
-    l/nav>
+    <h2>Table of Contents</h2>
+    <nav class="toc">
+      <ol>
+        <li><a class="chapter-link" href="chapters/01-introduction.html">Introduction</a> — what the platform is and why it matters</li>
+        <li><a class="chapter-link" href="chapters/02-setup.html">Setup &amp; First Query</a> — install, launch, and run your first Spark SQL</li>
+        <li><a class="chapter-link" href="chapters/03-spark-sql.html">Spark SQL Fundamentals</a> — SELECT, CREATE, INSERT, and time travel</li>
+        <li><a class="chapter-link" href="chapters/04-delta-lake.html">Delta Lake in Practice</a> — ACID, upserts, and partitioning</li>
+        <li><a class="chapter-link" href="chapters/05-apache-iceberg.html">Apache Iceberg in Practice</a> — hidden partitioning, snapshots, and branching</li>
+        <li><a class="chapter-link" href="chapters/06-data-import.html">Importing Data</a> — CSV, JSON, Parquet, TXT, ORC, Avro, and JDBC databases</li>
+        <li><a class="chapter-link" href="chapters/07-pyspark-transformations.html">PySpark Transformations</a> — DataFrame API, UDFs, and window functions</li>
+        <li><a class="chapter-link" href="chapters/08-real-world-project.html">Real-World Project</a> — build an end-to-end sales analytics pipeline</li>
+      </ol>
+    </nav>
 
-    lh2>Who this book is forl/h2>
-    lul>
-      lli>Data engineers learning open table formatsl/li>
-      lli>Analysts who want to run Spark locallyl/li>
-      lli>Startups that need a fast, free lakehouse sandboxl/li>
-      lli>Students preparing for big-data certificationsl/li>
-    l/ul>
+    <h2>Who this book is for</h2>
+    <ul>
+      <li>Data engineers learning open table formats</li>
+      <li>Analysts who want to run Spark locally</li>
+      <li>Startups that need a fast, free lakehouse sandbox</li>
+      <li>Students preparing for big-data certifications</li>
+    </ul>
 
-    lh2>What you needl/h2>
-    lul>
-      lli>Windows, macOS, or Linuxl/li>
-      lli>Python 3.10+ and Java 17+l/li>
-      lli>Node.js 20+ for the UIl/li>
-      lli>No cloud account requiredl/li>
-    l/ul>
+    <h2>What you need</h2>
+    <ul>
+      <li>Windows, macOS, or Linux</li>
+      <li>Python 3.10+ and Java 17+</li>
+      <li>Node.js 20+ for the UI</li>
+      <li>No cloud account required</li>
+    </ul>
 
-    lfooter>
-      lp>Open Lakehouse Workbench · 100% local · Delta Lake · Apache Iceberg · Apache Sparkl/p>
-    l/footer>
-  l/div>
-l/body>
-l/html>
+    <footer>
+      <p>Open Lakehouse Workbench · 100% local · Delta Lake · Apache Iceberg · Apache Spark</p>
+    </footer>
+  </div>
+</body>
+</html>

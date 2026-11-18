@@ -373,6 +373,12 @@ def load_notebook(relative: str) -> Dict[str, Any]:
             "Python 3 (PySpark built-in)",
             "python",
         )
+    elif kernel_name == "sql":
+        kernel_name, kernel_display, kernel_language = (
+            "sql",
+            "SQL (Spark SQL built-in)",
+            "sql",
+        )
 
     return {
         "path": path.relative_to(_resolve_root()).as_posix(),

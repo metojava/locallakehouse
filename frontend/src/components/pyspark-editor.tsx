@@ -1,4 +1,11 @@
-import { Loader2, Play, RotateCcw, Sparkles, Terminal } from "lucide-react";
+import {
+  Loader2,
+  Play,
+  RotateCcw,
+  Sparkles,
+  Square,
+  Terminal,
+} from "lucide-react";
 
 import { BufferTabs } from "@/components/buffer-tabs";
 import { CodeEditor } from "@/components/code-editor";
@@ -16,6 +23,7 @@ interface PySparkEditorProps {
   script: string;
   onScriptChange: (script: string) => void;
   onRun: () => void;
+  onStop: () => void;
   running: boolean;
   result: ExecutePySparkResponse | null;
   error: string | null;
@@ -26,6 +34,7 @@ export function PySparkEditor({
   script,
   onScriptChange,
   onRun,
+  onStop,
   running,
   result,
   error,
@@ -79,6 +88,17 @@ export function PySparkEditor({
               )}
               {running ? "Running…" : "Run Script"}
             </Button>
+            {running ? (
+              <Button
+                variant="destructive"
+                onClick={onStop}
+                className="shadow-lg shadow-destructive/20"
+                title="Cancel the running script"
+              >
+                <Square className="fill-current" />
+                Stop
+              </Button>
+            ) : null}
           </div>
         </div>
 

@@ -15,10 +15,13 @@ import {
   Code2,
   Database,
   Loader2,
+  Maximize2,
+  PanelLeft,
   Play,
   Plus,
   RotateCcw,
   Save,
+  Square,
   SquarePen,
   TextCursorInput,
   Trash2,
@@ -38,9 +41,11 @@ import type {
   NotebookDocumentResponse,
 } from "@/lib/api";
 import {
+  cancelExecution,
   executeNotebookCell,
   getKernels,
   installJavaKernel,
+  installScalaKernel,
   resetNotebookKernel,
   type KernelInfo,
 } from "@/lib/api";
@@ -53,6 +58,8 @@ interface NotebookEditorProps {
   saving: boolean;
   dirty: boolean;
   online: boolean;
+  fullWidth?: boolean;
+  onToggleFullWidth?: () => void;
 }
 
 function makeCell(type: "code" | "markdown"): NotebookCellDocument {
@@ -203,7 +210,7 @@ function CellOutputs({
   if (error) {
     return (
       <div className="border-t border-destructive/30 bg-destructive/10 px-4 py-3">
-        <pre className="max-h-[280px] overflow-auto whitespace-pre-wrap break-words font-mono text-[11.5px] leading-5 text-red-300">
+        <pre className="max-h-[280px] overflow-auto whitespace-pre-wrap break-words font-mono text-[13.5px] leading-5 text-red-300">
           {error}
         </pre>
       </div>
@@ -219,17 +226,17 @@ function CellOutputs({
     return (
       <div className="space-y-2 border-t border-border/50 bg-muted/10 px-4 py-3">
         {result.result_repr ? (
-          <pre className="whitespace-pre-wrap break-words font-mono text-[12px] text-emerald-300">
+          <pre className="whitespace-pre-wrap break-words font-mono text-[14px] text-emerald-300">
             {result.result_repr}
           </pre>
         ) : null}
         {result.stdout.trim() ? (
-          <pre className="max-h-[240px] overflow-auto whitespace-pre-wrap break-words font-mono text-[12px] leading-5 text-foreground/85">
+          <pre className="max-h-[240px] overflow-auto whitespace-pre-wrap break-words font-mono text-[14px] leading-5 text-foreground/85">
             {result.stdout}
           </pre>
         ) : null}
         {result.stderr.trim() ? (
-          <pre className="max-h-[240px] overflow-auto whitespace-pre-wrap break-words font-mono text-[12px] leading-5 text-red-300">
+          <pre className="max-h-[240px] overflow-auto whitespace-pre-wrap break-words font-mono text-[14px] leading-5 text-red-300">
             {result.stderr}
           </pre>
         ) : null}
@@ -251,7 +258,7 @@ function CellOutputs({
           <pre
             key={index}
             className={cn(
-              "max-h-[240px] overflow-auto whitespace-pre-wrap break-words font-mono text-[12px] leading-5",
+              "max-h-[240px] overflow-auto whitespace-pre-wrap break-words font-mono text-[14px] leading-5",
               output.kind === "error" ? "text-red-300" : "text-foreground/85",
             )}
           >
@@ -272,6 +279,8 @@ export function NotebookEditor({
   saving,
   dirty,
   online,
+  fullWidth = false,
+  onToggleFullWidth,
 }: NotebookEditorProps) {
   const [runningCell, setRunningCell] = useState<string | null>(null);
   const [runningAll, setRunningAll] = useState(false);
@@ -287,7 +296,9 @@ export function NotebookEditor({
   const [dataSourceOpen, setDataSourceOpen] = useState(false);
   const [kernels, setKernels] = useState<KernelInfo[]>([]);
   const [javaInstalled, setJavaInstalled] = useState(true);
+  const [scalaInstalled, setScalaInstalled] = useState(true);
   const [installingJava, setInstallingJava] = useState(false);
+  const [installingScala, setInstallingScala] = useState(false);
 
   const loadKernels = useCallback(async () => {
     if (!online) return;
@@ -295,6 +306,7 @@ export function NotebookEditor({
       const response = await getKernels();
       setKernels(response.kernels);
       setJavaInstalled(response.java_installed);
+      setScalaInstalled(response.scala_installed);
     } catch {
       // kernel list is optional; the built-in PySpark kernel always works
     }
@@ -335,7 +347,35 @@ export function NotebookEditor({
     }
   }, [loadKernels]);
 
+  const installScala = useCallback(async () => {
+    setInstallingScala(true);
+    setNotice(null);
+    try {
+      const result = await installScalaKernel();
+      setNotice(result.message);
+      await loadKernels();
+    } catch (err) {
+      setNotice(
+        `Could not install the Scala kernel: ${
+          err instanceof Error ? err.message : "unknown error"
+        }`,
+      );
+    } finally {
+      setInstallingScala(false);
+    }
+  }, [loadKernels]);
+
   const busy = runningCell !== null || runningAll;
+  const activeKernel = kernels.find(
+    (item) => item.name === notebook.kernel_name,
+  );
+  const kernelLanguage = (
+    activeKernel?.language ||
+    notebook.kernel_language ||
+    "python"
+  ).toLowerCase();
+  const isSqlKernel = notebook.kernel_name === "sql";
+  const isPythonKernel = kernelLanguage === "python";
 
   useEffect(() => {
     setResults({});
@@ -421,6 +461,14 @@ export function NotebookEditor({
     setRunningAll(false);
   }, [busy, notebook.cells, notebook.path, online]);
 
+  const stopRunning = useCallback(async () => {
+    try {
+      await cancelExecution(`notebook:${notebook.path}`);
+    } catch {
+      // The cell may have already finished; nothing else to do.
+    }
+  }, [notebook.path]);
+
   const addCell = useCallback(
     (type: "code" | "markdown", index?: number) => {
       const cell = makeCell(type);
@@ -479,14 +527,16 @@ export function NotebookEditor({
       setResults({});
       setErrors({});
       setNotice(
-        result.existed
-          ? "Kernel reset. Variables from previous cells were cleared."
-          : "Kernel was already fresh.",
+        isSqlKernel
+          ? "Cell outputs cleared. SQL tables and temp views stay in the shared Spark session."
+          : result.existed
+            ? "Kernel reset. Variables from previous cells were cleared."
+            : "Kernel was already fresh.",
       );
     } catch (err) {
       setNotice(toErrorMessage(err));
     }
-  }, [notebook.path]);
+  }, [isSqlKernel, notebook.path]);
 
   const codeCount = useMemo(
     () => notebook.cells.filter((cell) => cell.type === "code").length,
@@ -496,6 +546,29 @@ export function NotebookEditor({
   return (
     <div className="animate-fade-in space-y-4">
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-card/60 px-4 py-3">
+        {onToggleFullWidth ? (
+          fullWidth ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onToggleFullWidth}
+              title="Show the file explorer next to this notebook"
+            >
+              <PanelLeft />
+              Explorer
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onToggleFullWidth}
+              title="Expand this notebook to full width"
+              aria-label="Expand this notebook to full width"
+            >
+              <Maximize2 />
+            </Button>
+          )
+        ) : null}
         <div className="flex min-w-0 items-center gap-2">
           <Badge variant="info">Notebook</Badge>
           <span className="truncate text-sm font-medium" title={notebook.path}>
@@ -546,16 +619,30 @@ export function NotebookEditor({
               Install Java kernel
             </Button>
           ) : null}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDataSourceOpen(true)}
-            disabled={busy}
-            title="Load data from a file or database"
-          >
-            <Database />
-            Data source
-          </Button>
+          {!scalaInstalled ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void installScala()}
+              disabled={installingScala || !online}
+              title="Download and register the almond Scala kernel"
+            >
+              {installingScala ? <Loader2 className="animate-spin" /> : <Plus />}
+              Install Scala kernel
+            </Button>
+          ) : null}
+          {isPythonKernel ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDataSourceOpen(true)}
+              disabled={busy}
+              title="Load data from a file or database"
+            >
+              <Database />
+              Data source
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             size="sm"
@@ -592,6 +679,17 @@ export function NotebookEditor({
             {runningAll ? <Loader2 className="animate-spin" /> : <Play />}
             Run all
           </Button>
+          {busy ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => void stopRunning()}
+              title="Cancel the running cell"
+            >
+              <Square className="fill-current" />
+              Stop
+            </Button>
+          ) : null}
           <Button size="sm" onClick={onSave} disabled={saving || !dirty}>
             {saving ? <Loader2 className="animate-spin" /> : <Save />}
             Save
@@ -661,6 +759,15 @@ export function NotebookEditor({
                         <SquarePen />
                       )}
                     </Button>
+                  ) : isRunningCell ? (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      title="Stop cell"
+                      onClick={() => void stopRunning()}
+                    >
+                      <Square className="fill-current text-red-400" />
+                    </Button>
                   ) : (
                     <Button
                       variant="ghost"
@@ -669,11 +776,7 @@ export function NotebookEditor({
                       onClick={() => void runCell(cell)}
                       disabled={busy || !online || !cell.source.trim()}
                     >
-                      {isRunningCell ? (
-                        <Loader2 className="animate-spin text-primary" />
-                      ) : (
-                        <Play />
-                      )}
+                      <Play />
                     </Button>
                   )}
                   <Button
@@ -755,7 +858,15 @@ export function NotebookEditor({
                   value={cell.source}
                   onChange={(source) => updateCell(cell.id, { source })}
                   onRun={() => void runCell(cell)}
-                  placeholder="df = spark.range(100)"
+                  placeholder={
+                    isSqlKernel
+                      ? "SELECT * FROM my_table LIMIT 100"
+                      : kernelLanguage === "java"
+                        ? 'System.out.println("hello");'
+                        : kernelLanguage === "scala"
+                          ? 'println("hello")'
+                          : "df = spark.range(100)"
+                  }
                   fontSize={fontSize}
                   theme={theme}
                 />
@@ -788,7 +899,13 @@ export function NotebookEditor({
           Add markdown cell
         </Button>
         <span className="ml-auto text-[10px] text-muted-foreground/70">
-          Cells share one kernel: variables persist between runs.
+          {isSqlKernel
+            ? "SQL cells run against the shared Spark session; use `%sql` in Python cells too."
+            : kernelLanguage === "java"
+              ? "Java cells run in their own kernel with the local Spark jars on the classpath; create the session in a cell."
+              : kernelLanguage === "scala"
+                ? "Scala cells run in their own kernel; add Spark dependencies in the first cell (see README)."
+                : "Cells share one kernel: variables persist between runs."}
         </span>
       </div>
 

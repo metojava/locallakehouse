@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-$frontend = Join-Path $root "frontend-ts"
+$frontend = Join-Path $root "frontend"
 Set-Location -LiteralPath $frontend
 
 $npm = "npm.cmd"
